@@ -1,4 +1,4 @@
-This repo set to run  benchmark scripts for npu, developers can easily run performance tests on their own machines with one line of code .
+This repo is created to run  benchmark scripts for npu, developers can easily run performance tests on their own machines with one line of code .
 ### How to use
 #### Prerequisites
 - Please make sure that you have vllm and vllm-ascned installed and npu environment，cause these scripts are specially prepared for npu devices
