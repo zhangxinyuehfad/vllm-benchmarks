@@ -6,7 +6,7 @@ This repo is created to run  benchmark scripts for npu, developers can easily ru
 #### Run benchmarks
 these scripts can automatically conduct performance testing of serving, through and latency, run the following command:
 ```
-cd vllm-ascend
+cd vllm-benchmarks
 bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh
 ```
 once  the script is finished, you can view the result files in the benchmarks/results folder. and the results may looks like below:
