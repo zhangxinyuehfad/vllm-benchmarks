@@ -26,7 +26,7 @@ ensure_sharegpt_downloaded() {
 }
 
 ensure_model_downloaded() {
-  local DIR=$LLAMA_3_8B_PATH
+  local DIR=$LLAMA_3_1_8B_PATH
   if [ ! -d "$DIR" ]; then
     exit 1
   fi

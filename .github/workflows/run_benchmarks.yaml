@@ -42,7 +42,8 @@ jobs:
         --device /dev/hisi_hdc
       env:
         HF_ENDPOINT: https://hf-mirror.com
-        VLLM_USE_MODELSCOPE: true
+        SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
+        LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
     steps:
       - name: Check npu and CANN info
         run: |
