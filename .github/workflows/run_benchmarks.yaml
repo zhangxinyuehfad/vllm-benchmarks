@@ -1,8 +1,20 @@
 name: 'benchmarks'
 
 on:
-  schedule:
-    - cron: '0 12 * * *' 
+  push:
+    branches:
+      - "main"
+    paths:
+      - '*.txt'
+      - '**/*.py'
+      - '.github/workflows/run_benchmarks.yaml'
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - '*.txt'
+      - '**/*.py'
+      - '.github/workflows/run_benchmarks.yaml'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
