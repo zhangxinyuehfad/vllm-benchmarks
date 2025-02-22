@@ -99,11 +99,15 @@ jobs:
           repository: cosdt/vllm-benchmarks
           path: ./vllm-benchmarks
       
-      - name: Test
+      - name: Prepare dataset
+        working-directory: ./vllm-benchmarks
         run: |
-          pwd
-          cd ../
-          ls
+          cp -n /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json ./
+
+      - name: Run benchmarks
+        working-directory: ./vllm-benchmarks
+        run: | 
+          bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh
           
 
 
