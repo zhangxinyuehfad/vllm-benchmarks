@@ -34,7 +34,6 @@ jobs:
         - /usr/local/dcmi:/usr/local/dcmi
         - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
         - /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/
-        # Use self-host cache speed up pip and model download
         - /data/disk2/cache:/github/home/models
       options: >-
         --device /dev/davinci6
