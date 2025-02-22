@@ -42,6 +42,7 @@ jobs:
         --device /dev/hisi_hdc
       env:
         HF_ENDPOINT: https://hf-mirror.com
+        VLLM_USE_MODELSCOPE: true
     steps:
       - name: Check npu and CANN info
         run: |
