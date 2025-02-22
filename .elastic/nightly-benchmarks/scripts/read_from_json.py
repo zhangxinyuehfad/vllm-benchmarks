@@ -17,10 +17,10 @@ cli_parser = ArgumentParser()
 @dataclass
 class BaseDataEntry:
     commit_id: str
+    commit_title: str
     test_name: str
-    pull_request: str
-    tp: int = 1
-    created_at: Optional[str] = None
+    tp: int
+    created_at: Union[str, None]
 
     def __post_init__(self):
         if not self.created_at:
@@ -75,8 +75,6 @@ class PerformanceDataSet:
     def add_latency_data(self, entry: LatencyDataEntry):
         self.latency_data.append(entry)
 
-    def get_serving_by_model(self, model: str) -> List[ServingDataEntry]:
-        return [entry for entry in self.serving_data if entry.model == model]
 
     def from_cli_args(self):
         RESULT_PATH = os.path.join(get_project_root(), "benchmarks", "results")
@@ -98,7 +96,6 @@ class PerformanceDataSet:
             except Exception as e:
                 print(f"read from {json_file} error: {e}")
 
-        return data
 
     @staticmethod
     def add_cli_args(parser: ArgumentParser) -> ArgumentParser:
@@ -124,5 +121,5 @@ def get_project_root() -> Path:
     return current_path
 
 
-RESULT_PATH = os.path.join(get_project_root(), "benchmarks","results")
+RESULT_PATH = os.path.join(get_project_root(), "benchmarks","results_qwen")
 print(RESULT_PATH)
