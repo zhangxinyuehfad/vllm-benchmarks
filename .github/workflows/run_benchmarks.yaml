@@ -44,7 +44,6 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
         LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
-        RESULTS_FOLDER: ${{ github.workspace }}/results
     steps:
       - name: Check npu and CANN info
         run: |
@@ -154,9 +153,15 @@ jobs:
         working-directory: ./vllm-benchmarks
         run: |
           cp -n /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json ./
+          pip install -r requirements.txt
 
       - name: Run benchmarks
         working-directory: ./vllm-benchmarks
         run: | 
           bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh
+      
+      - name: Test ls RESULTS_FOLDER
+        working-directory: ./vllm-benchmarks
+        run: |
+          ls benchmarks/results
           

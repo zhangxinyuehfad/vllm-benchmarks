@@ -271,7 +271,7 @@ main() {
   cd benchmarks || exit 1
   QUICK_BENCHMARK_ROOT=../.elastic/nightly-benchmarks/
 
-  # declare -g RESULTS_FOLDER=results
+  declare -g RESULTS_FOLDER=results
   mkdir -p $RESULTS_FOLDER
   
 
