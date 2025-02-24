@@ -98,3 +98,7 @@ jobs:
           }' | jq -r '.hits.hits[]._id')
           grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
           cat filtered_commit_log.txt
+      - name: Save to cache
+        working-directory: ./vllm-ascend
+        run: |
+          mv filtered_commit_log.txt /github/home/.cache/
