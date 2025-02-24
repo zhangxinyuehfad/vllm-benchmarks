@@ -1,6 +1,5 @@
 from doctest import FAIL_FAST
 import os
-from cv2 import log
 import requests
 import json
 import warnings

@@ -60,53 +60,53 @@ class LatencyDataEntry(BaseDataEntry):
     median_latency: float
     percentile_99: float
 
-@dataclass
-class PerformanceDataSet:
-    serving_data: List[ServingDataEntry] = []
-    throughput_data: List[ThroughputDataEntry] = []
-    latency_data: List[LatencyDataEntry] = []
+# @dataclass
+# class PerformanceDataSet:
+#     serving_data: List[ServingDataEntry] = []
+#     throughput_data: List[ThroughputDataEntry] = []
+#     latency_data: List[LatencyDataEntry] = []
 
-    def add_serving_data(self, entry: ServingDataEntry):
-        self.serving_data.append(entry)
+#     def add_serving_data(self, entry: ServingDataEntry):
+#         self.serving_data.append(entry)
 
-    def add_throughput_data(self, entry: ThroughputDataEntry):
-        self.throughput_data.append(entry)
+#     def add_throughput_data(self, entry: ThroughputDataEntry):
+#         self.throughput_data.append(entry)
 
-    def add_latency_data(self, entry: LatencyDataEntry):
-        self.latency_data.append(entry)
-
-
-    def from_cli_args(self):
-        RESULT_PATH = os.path.join(get_project_root(), "benchmarks", "results")
-        if not os.path.isdir(RESULT_PATH):
-            raise FileNotFoundError(f"the path {RESULT_PATH} do not exist")
-
-        for json_file in Path(RESULT_PATH).rglob('*.json'):
-            try:
-                data_map = self.read_json(json_file)
-                test_name = Path(json_file).stem
-                if str.startswith('latency'):
-                    avg_latency = data_map[avg_latency]
-                    percentiles = data_map[percentiles]
-                    self.add_latency_data(LatencyDataEntry())
-                if str.startswith('serving'):
-                    pass
-                if str.startswith('throuthput'):
-                    pass
-            except Exception as e:
-                print(f"read from {json_file} error: {e}")
+#     def add_latency_data(self, entry: LatencyDataEntry):
+#         self.latency_data.append(entry)
 
 
-    @staticmethod
-    def add_cli_args(parser: ArgumentParser) -> ArgumentParser:
-        parser.add_argument("--commit_id", type=str)
-        parser.add_argument("--pull_request", type=str)
+#     def from_cli_args(self):
+#         RESULT_PATH = os.path.join(get_project_root(), "benchmarks", "results")
+#         if not os.path.isdir(RESULT_PATH):
+#             raise FileNotFoundError(f"the path {RESULT_PATH} do not exist")
 
-    @staticmethod
-    def read_json(file_path: Union[Path, str]) -> Dict:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data_dict = json.loads(f)
-        return data_dict
+#         for json_file in Path(RESULT_PATH).rglob('*.json'):
+#             try:
+#                 data_map = self.read_json(json_file)
+#                 test_name = Path(json_file).stem
+#                 if str.startswith('latency'):
+#                     avg_latency = data_map[avg_latency]
+#                     percentiles = data_map[percentiles]
+#                     self.add_latency_data(LatencyDataEntry())
+#                 if str.startswith('serving'):
+#                     pass
+#                 if str.startswith('throuthput'):
+#                     pass
+#             except Exception as e:
+#                 print(f"read from {json_file} error: {e}")
+
+
+#     @staticmethod
+#     def add_cli_args(parser: ArgumentParser) -> ArgumentParser:
+#         parser.add_argument("--commit_id", type=str)
+#         parser.add_argument("--pull_request", type=str)
+
+#     @staticmethod
+#     def read_json(file_path: Union[Path, str]) -> Dict:
+#         with open(file_path, 'r', encoding='utf-8') as f:
+#             data_dict = json.loads(f)
+#         return data_dict
 
 
 
@@ -121,5 +121,18 @@ def get_project_root() -> Path:
     return current_path
 
 
-RESULT_PATH = os.path.join(get_project_root(), "benchmarks","results_qwen")
+def read_from_json(file_path: Union[str, Path]):
+
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+    return data
+
+
+
+RESULT_PATH = os.path.join(get_project_root(), "benchmarks","results")
 print(RESULT_PATH)
+
+data = read_from_json("/Users/wangli/vllm-project/vllm-benchmarks/.elastic/nightly-benchmarks/tests/latency-tests.json")
+
+print(data)
+print(type(data))
