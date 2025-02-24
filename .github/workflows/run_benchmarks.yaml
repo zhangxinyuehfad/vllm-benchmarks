@@ -44,7 +44,7 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
         LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
-        RESULTS_FOLDER: $GITHUB_WORKSPACE/results
+        RESULTS_FOLDER: ${GITHUB_WORKSPACE}/results
     steps:
       - name: Check npu and CANN info
         run: |
