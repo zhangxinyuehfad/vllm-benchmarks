@@ -103,35 +103,6 @@ jobs:
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
 
-      # - name: Get Today's PR Commits with Python File Changes
-      #   working-directory: ./vllm-ascend
-      #   run: |
-      #     # get commits_id and commit_title
-      #     git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
-
-      #     curl -k -X POST "${ES_DOMAIN}/vllm_benchmark_throughput/_search" \
-      #     -H "Content-Type: application/x-ndjson" \
-      #     -H "Authorization: ${ES_AUTHORIZATION}" \
-      #     -d '{
-      #       "_source": false,
-      #       "size": 1,
-      #       "query": {
-      #         "match_all": {}
-      #       },
-      #       "sort": [
-      #         {
-      #           "created_at": {
-      #             "order": "desc"
-      #           }
-      #         }
-      #       ]
-      #     }' | jq -r '.hits.hits[]._id'
-
-          
-          
-      #     echo "COMMITS_TO_TEST=$FILTERED_COMMITS" >> $GITHUB_ENV
-
-
       - name: Install vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
         run: |
