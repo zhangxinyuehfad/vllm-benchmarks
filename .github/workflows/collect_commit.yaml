@@ -50,8 +50,12 @@ jobs:
           apt-get update -y 
           apt-get -y install curl git
 
-      - name: Checkout vllm-project/vllm-ascend
+      - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm-ascend
+          path: ./vllm-ascend
+          fetch-depth: 0
 
       - name: Collect pr info from vllm-project/vllm-ascend
         run: |
