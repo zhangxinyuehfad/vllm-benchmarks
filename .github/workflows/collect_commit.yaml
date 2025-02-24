@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update -y 
-          apt-get -y install curl
+          apt-get -y install curl git
 
       - name: Checkout vllm-project/vllm-ascend
         uses: actions/checkout@v4
