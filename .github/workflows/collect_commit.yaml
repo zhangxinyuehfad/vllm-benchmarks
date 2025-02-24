@@ -45,10 +45,15 @@ jobs:
         SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
         LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
     steps:
+      - name: Config mirrors
+        run: |
+          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
       - name: Install dependencies
         run: |
           apt-get update -y 
-          apt-get -y install curl git
+          apt-get -y install curl git jq
 
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
@@ -62,7 +67,7 @@ jobs:
         run: |
           git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
           
-          curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
+          commit_id_cur=$(curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
           -H "Content-Type: application/x-ndjson" \
           -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
           -d '{
@@ -78,4 +83,5 @@ jobs:
                 }
               }
             ]
-          }' | jq -r '.hits.hits[]._id'
+          }' | jq -r '.hits.hits[]._id')
+          grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
