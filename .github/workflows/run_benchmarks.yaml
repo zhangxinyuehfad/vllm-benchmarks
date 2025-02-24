@@ -51,6 +51,12 @@ jobs:
           npu-smi info
           cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
 
+      - name: Install system dependencies
+        working-directory: ./vllm-ascend
+        run: |
+          apt-get update -y
+          apt-get -y install git jq 
+
       - name: Setup proxy
         run: |
           nohup /github/home/.cache/clash/clash \
@@ -80,11 +86,7 @@ jobs:
           path: ./vllm-ascend
           fetch-depth: 0
 
-      - name: Install system dependencies
-        working-directory: ./vllm-ascend
-        run: |
-          apt-get update -y
-          apt-get -y install `cat packages.txt`
+
 
       - name: Install dependencies
         run: |
