@@ -54,7 +54,7 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update -y
-          apt-get -y install git jq wget
+          apt-get -y install git jq wget curl lsof
 
       - name: Setup proxy
         run: |
@@ -66,6 +66,12 @@ jobs:
           
           git config --global http.proxy "http://127.0.0.1:7890"
           git config --global https.proxy "http://127.0.0.1:7890"
+
+      -name: Check env var
+       run: |
+         echo ${SHAREGPT_PATH}
+         echo ${LLAMA_3_1_8B_PATH}
+         echo ${RESULTS_FOLDER}
 
       - name: Config mirrors
         run: |
@@ -84,8 +90,6 @@ jobs:
           repository: vllm-project/vllm-ascend
           path: ./vllm-ascend
           fetch-depth: 0
-
-
 
       - name: Install dependencies
         working-directory: ./vllm-ascend
