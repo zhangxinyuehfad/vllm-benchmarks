@@ -58,6 +58,7 @@ jobs:
           fetch-depth: 0
 
       - name: Collect pr info from vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
         run: |
           git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
           
@@ -66,7 +67,7 @@ jobs:
           -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
           -d '{
             "_source": false,
-            "size": 1,
+            "size": 10000,
             "query": {
               "match_all": {}
             },
