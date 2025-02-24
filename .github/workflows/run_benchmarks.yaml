@@ -67,11 +67,11 @@ jobs:
           git config --global http.proxy "http://127.0.0.1:7890"
           git config --global https.proxy "http://127.0.0.1:7890"
 
-      -name: Check env var
-       run: |
-         echo ${SHAREGPT_PATH}
-         echo ${LLAMA_3_1_8B_PATH}
-         echo ${RESULTS_FOLDER}
+      - name: Check env var
+        run: |
+          echo ${SHAREGPT_PATH}
+          echo ${LLAMA_3_1_8B_PATH}
+          echo ${RESULTS_FOLDER}
 
       - name: Config mirrors
         run: |
