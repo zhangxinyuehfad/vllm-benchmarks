@@ -50,6 +50,17 @@ jobs:
           npu-smi info
           cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
 
+      - name: Check env var
+        run: |
+          echo ${SHAREGPT_PATH}
+          echo ${LLAMA_3_1_8B_PATH}
+          echo ${RESULTS_FOLDER}
+
+      - name: Config mirrors
+        run: |
+          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
       - name: Install system dependencies
         run: |
           apt-get update -y
@@ -64,19 +75,8 @@ jobs:
           sleep 5
           
           git config --global http.proxy "http://127.0.0.1:7890"
-          git config --global https.proxy "http://127.0.0.1:7890"
+          git config --global https.proxy "http://127.0.0.1:7890" 
 
-      - name: Check env var
-        run: |
-          echo ${SHAREGPT_PATH}
-          echo ${LLAMA_3_1_8B_PATH}
-          echo ${RESULTS_FOLDER}
-
-      - name: Config mirrors
-        run: |
-          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
-          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-        
       - name: Checkout vllm-project/vllm repo
         uses: actions/checkout@v4
         with:
@@ -149,10 +149,9 @@ jobs:
           repository: cosdt/vllm-benchmarks
           path: ./vllm-benchmarks
       
-      - name: Prepare dataset
+      - name: Install benchmark dependencies
         working-directory: ./vllm-benchmarks
         run: |
-          cp -n /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json ./
           pip install -r requirements.txt
 
       - name: Run benchmarks
