@@ -22,7 +22,7 @@ defaults:
 
 jobs:
   test:
-    name: vLLM Ascend test (self-host)
+    name: collect_commit (self-host)
     runs-on: ascend-arcch64  # actionlint-ignore: runner-label
 
     container:

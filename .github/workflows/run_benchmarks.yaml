@@ -31,7 +31,7 @@ defaults:
 
 jobs:
   test:
-    name: vLLM Ascend test (self-host)
+    name: run benchmarks (self-host)
     runs-on: ascend-arcch64  # actionlint-ignore: runner-label
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
@@ -52,6 +52,10 @@ jobs:
         SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
         LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
     steps:
+      - name: test_file
+        run: |
+          cat /github/home/.cache/filtered_commit_log.txt
+
       - name: Check npu and CANN info
         run: |
           npu-smi info
