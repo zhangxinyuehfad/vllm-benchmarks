@@ -1,20 +1,24 @@
 name: 'benchmarks'
 
 on:
-  push:
-    branches:
-      - "main"
-    paths:
-      - '*.txt'
-      - '**/*.py'
-      - '.github/workflows/run_benchmarks.yaml'
-  pull_request:
-    branches:
-      - "main"
-    paths:
-      - '*.txt'
-      - '**/*.py'
-      - '.github/workflows/run_benchmarks.yaml'
+  workflow_run:
+    workflows: ["collect_commit"]
+    types:
+      - completed  
+  # push:
+  #   branches:
+  #     - "main"
+  #   paths:
+  #     - '*.txt'
+  #     - '**/*.py'
+  #     - '.github/workflows/run_benchmarks.yaml'
+  # pull_request:
+  #   branches:
+  #     - "main"
+  #   paths:
+  #     - '*.txt'
+  #     - '**/*.py'
+  #     - '.github/workflows/run_benchmarks.yaml'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -24,9 +28,14 @@ defaults:
     shell: bash -el {0}
 
 jobs:
+  workflow_call:
+    uses: ./.github/workflows/collect_commit.yml
+
   test:
     name: vLLM Ascend test (self-host)
     runs-on: ascend-arcch64  # actionlint-ignore: runner-label
+    needs: workflow_call
+    if: success()
 
     container:
       image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
