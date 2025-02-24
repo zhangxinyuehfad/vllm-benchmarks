@@ -1,17 +1,16 @@
 from doctest import FAIL_FAST
 import os
-from cv2 import log
 import requests
 import json
-import warnings
-import re
-from urllib3.exceptions import InsecureRequestWarning
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import logging
 
 
 logger = logging.getLogger()
+
+os.environ['ES_DOAMIN'] = "https://190.92.234.172:9200"
+os.environ['ES_AUTHORIZATION'] = "Basic YWRtaW46bkJLWkU3Q2NLRk5oNGdRUExCZEA"
+
 
 ES_DOAMIN = os.getenv("ES_DOAMIN")
 ES_AUTHORIZATION = os.getenv("ES_AUTHORIZATION")
@@ -21,9 +20,9 @@ class DataHandler():
     def __init__(self):
         self.headers = {
             "Content-Type": "application/x-ndjson",
-            "Authorization": ES_AUTHORIZATION
+            "Authorization": "Basic YWRtaW46bkJLWkU3Q2NLRk5oNGdRUExCZEA"
         }
-        self.domain = ES_DOAMIN
+        self.domain = 'https://190.92.234.172:9200'
         self._index_name = "vllm_benchmarks"
 
     @property
@@ -283,7 +282,7 @@ class DataHandler():
             json=data,
             verify=False
         )
-        return resp.json()['hits']['hits']
+        return resp.json()
 
     def _format_data_for_bulk_insert(self, data_list):
         """

@@ -44,6 +44,7 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
         LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
+        RESULTS_FOLDER: $GITHUB_WORKSPACE/results
     steps:
       - name: Check npu and CANN info
         run: |
@@ -55,13 +56,21 @@ jobs:
           sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
         
+      - name: Checkout vllm-project/vllm repo
+        uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm
+          path: ./
+
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm-ascend
-          path: ./
+          path: ./vllm-ascend
+          fetch-depth: 0
 
       - name: Install system dependencies
+        working-directory: ./vllm-ascend
         run: |
           apt-get update -y
           apt-get -y install `cat packages.txt`
@@ -70,18 +79,41 @@ jobs:
         run: |
           pip install -r requirements-dev.txt
 
-      - name: Checkout vllm-project/vllm repo
-        uses: actions/checkout@v4
-        with:
-          repository: vllm-project/vllm
-          path: ./vllm-empty
-
       - name: Install vllm-project/vllm from source
-        working-directory: ./vllm-empty
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
 
+      - name: Get Today's PR Commits with Python File Changes
+        working-directory: ./vllm-ascend
+        run: |
+          # get commits_id and commit_title
+          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
+
+          curl -k -X POST "${ES_DOMAIN}/vllm_benchmark_throughput/_search" \
+          -H "Content-Type: application/x-ndjson" \
+          -H "Authorization: ${ES_AUTHORIZATION}" \
+          -d '{
+            "_source": false,
+            "size": 1,
+            "query": {
+              "match_all": {}
+            },
+            "sort": [
+              {
+                "created_at": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }' | jq -r '.hits.hits[]._id'
+
+          
+          
+          echo "COMMITS_TO_TEST=$FILTERED_COMMITS" >> $GITHUB_ENV
+
+
       - name: Install vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
         run: |
           pip install -e .
 
