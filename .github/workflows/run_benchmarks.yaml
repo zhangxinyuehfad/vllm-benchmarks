@@ -90,11 +90,6 @@ jobs:
           path: ./vllm-ascend
           fetch-depth: 0
 
-      - name: Install dependencies
-        working-directory: ./vllm-ascend
-        run: |
-          pip install -r requirements-dev.txt
-
       - name: Install vllm-project/vllm from source
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .

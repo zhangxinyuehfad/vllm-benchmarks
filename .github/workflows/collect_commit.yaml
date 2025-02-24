@@ -1,0 +1,76 @@
+name: 'collection'
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - '*.txt'
+      - '**/*.py'
+      - '.github/workflows/collect_commit.yaml'
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - '*.txt'
+      - '**/*.py'
+      - '.github/workflows/collect_commit.yaml'
+
+# Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
+# declared as "shell: bash -el {0}" on steps that need to be properly activated.
+# It's used to activate ascend-toolkit environment variables.
+defaults:
+  run:
+    shell: bash -el {0}
+
+jobs:
+  test:
+    name: vLLM Ascend test (self-host)
+    runs-on: ascend-arcch64  # actionlint-ignore: runner-label
+
+    container:
+      image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
+      volumes:
+        - /usr/local/dcmi:/usr/local/dcmi
+        - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
+        - /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/
+        - /home/wl/actions-runner/_work/cache:/github/home/.cache/
+      options: >-
+        --device /dev/davinci6
+        --device /dev/davinci_manager
+        --device /dev/devmm_svm
+        --device /dev/hisi_hdc
+      env:
+        HF_ENDPOINT: https://hf-mirror.com
+        SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
+        LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update -y 
+          apt-get -y install curl
+
+      - name: Checkout vllm-project/vllm-ascend
+        uses: actions/checkout@v4
+
+      - name: Collect pr info from vllm-project/vllm-ascend
+        run: |
+          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
+          
+          curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
+          -H "Content-Type: application/x-ndjson" \
+          -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
+          -d '{
+            "_source": false,
+            "size": 1,
+            "query": {
+              "match_all": {}
+            },
+            "sort": [
+              {
+                "created_at": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }' | jq -r '.hits.hits[]._id'
