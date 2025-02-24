@@ -97,3 +97,4 @@ jobs:
             ]
           }' | jq -r '.hits.hits[]._id')
           grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
+          cat filtered_commit_log.txt
