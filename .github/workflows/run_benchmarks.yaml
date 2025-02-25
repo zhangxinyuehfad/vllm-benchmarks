@@ -1,26 +1,16 @@
 name: 'benchmarks'
 
-
 on:
-  workflow_run:
-    workflows: ["collect_commits"]
-    types:
-      - completed  # 监听 Workflow A 结束
-# on:
-#   push:
-#     branches:
-#       - "main"
-#     paths:
-#       - '*.txt'
-#       - '**/*.py'
-#       - '.github/workflows/run_benchmarks.yaml'
-#   pull_request:
-#     branches:
-#       - "main"
-#     paths:
-#       - '*.txt'
-#       - '**/*.py'
-#       - '.github/workflows/run_benchmarks.yaml'
+  workflow_dispatch:
+    inputs:
+      commit_id:
+        description: 'Commit id of repo vllm-project/vllm-ascend to fetch'
+        required: true
+      commit_title:
+        description: 'Commit title'
+        required: true
+        default: 'None commit message found on this commit'
+
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -52,10 +42,6 @@ jobs:
         SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
         LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
     steps:
-      - name: test_file
-        run: |
-          cat /github/home/.cache/filtered_commit_log.txt
-
       - name: Check npu and CANN info
         run: |
           npu-smi info
@@ -66,6 +52,8 @@ jobs:
           echo ${SHAREGPT_PATH}
           echo ${LLAMA_3_1_8B_PATH}
           echo ${RESULTS_FOLDER}
+          echo "commit_id is ${{ github.event.inputs.commit_id }}"
+          echo "commit_title is ${{ github.event.inputs.commit_title }}"
 
       - name: Config mirrors
         run: |
