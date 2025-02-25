@@ -90,9 +90,9 @@ def extract_tp_value(s):
     match = re.search(r"tp(\d+)", s)
     return int(match.group(1)) if match else None
 
-def data_prc(folder_path: Union[str, Path]) -> Dict[str,List[Union[ServingDataEntry, LatencyDataEntry, ThroughputDataEntry]]]:
-    commit_id = 'd0b3cb4fa79d5fc7f8245a3c68885ce1fa030ba4'
-    commit_title = 'modify:Eliminate redundant operations in the code to improve performance (#137)'
+def data_prc(folder_path: Union[str, Path], commit_id, commit_title) -> Dict[str,List[Union[ServingDataEntry, LatencyDataEntry, ThroughputDataEntry]]]:
+    commit_id = commit_id
+    commit_title = commit_title
     json_data = read_from_json(folder_path)
     res_instance = {'vllm_benchmark_serving': [], "vllm_benchmark_latency":[], "vllm_benchmark_throughput":[]}
     for test_name, data in json_data.items():
