@@ -254,8 +254,10 @@ run_serving_tests() {
 }
 
 
-send_to_es() {
-
+send_to_es() { 
+  echo $1
+  echo $2
+  python3 -m send_to_es.py --commit_id $1 --commit_title $2
 }
 
 
@@ -291,7 +293,10 @@ main() {
   run_serving_tests $QUICK_BENCHMARK_ROOT/tests/serving-tests.json
   run_latency_tests $QUICK_BENCHMARK_ROOT/tests/latency-tests.json
   run_throughput_tests $QUICK_BENCHMARK_ROOT/tests/throughput-tests.json
-  
+
+  cd ../es-om || exit 1
+  send_to_es   $COMMIT_ID $COMMIT_TITLE
+
   END_TIME=$(date +%s)
   ELAPSED_TIME=$((END_TIME - START_TIME))
   echo "Total execution time: $ELAPSED_TIME seconds"
