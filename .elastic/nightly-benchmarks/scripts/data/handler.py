@@ -264,16 +264,16 @@ class DataHandler():
         except Exception as e:
             raise Exception(e)
 
-    def search_data_from_vllm(self, _index: str):
+    def search_data_from_vllm(self, _index: str, source: bool=False, size: int=1000):
         url = f'{self.domain}/{_index}/_search'
         data = {
-            "_source": True,
+            "_source": source,
             "size": 20,
             "query": {
             "match_all": {}
                 },
             "sort": [
-            { "create_at": { "order": "desc" } } 
+            { "created_at": { "order": "desc" } } 
         ]
         }
         resp =  requests.post(

@@ -21,7 +21,7 @@ defaults:
     shell: bash -el {0}
 
 jobs:
-  test:
+  collect:
     name: collect_commit (self-host)
     runs-on: ascend-arcch64  # actionlint-ignore: runner-label
 

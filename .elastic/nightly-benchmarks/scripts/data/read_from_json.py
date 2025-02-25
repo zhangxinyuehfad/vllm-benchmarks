@@ -142,8 +142,11 @@ def data_prc(folder_path: Union[str, Path]) -> Dict[str,List[Union[ServingDataEn
     return res_instance
      
 
-
-# res =  data_prc("/Users/wangli/vllm-project/data/results_qwen")
-
-# for item in res:
-#     print(item.to_dict())
+def get_all_commit(file_path):
+    res = {}
+    with open(file_path, 'r') as f:
+        for line in f:
+            commit= line.strip().split(' ', 1)
+            commit_id, commit_title = commit[0], commit[1]
+            res[commit_id] = commit_title
+    return res
