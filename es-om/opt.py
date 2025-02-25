@@ -9,7 +9,7 @@ from data import ServingDataEntry, LatencyDataEntry, ThroughputDataEntry, data_p
 data_handler = DataHandler()
 
 def fetch_pr_from_es(index_name: str = None):
-    sources = data_handler.search_data_from_vllm('vllm_benchmark_throughput', source=True)
+    sources = data_handler.search_data_from_vllm('vllm_benchmark_serving', source=True)
     print(sources)
     return sources
 
@@ -19,6 +19,5 @@ def prc_json_to_es(folder_path: Union[str, Path]):
 
 if __name__ == '__main__':
 
-    res = fetch_pr_from_es()
-    for k,v in res.items():
-        print(f"{k}:{v}")
+    data_handler.index_name = 'vllm_benchmark_serving'
+    data_handler.search_data_from_vllm(vllm_benchmark_serving)

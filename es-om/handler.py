@@ -359,7 +359,7 @@ class DataHandler():
         header['Content-Type'] = 'application/json'
         update_data = {'doc':data}
         try:
-            resp = requests.post(
+            resp = requests.put(
                 url, 
                 headers=header, 
                 json=update_data, 

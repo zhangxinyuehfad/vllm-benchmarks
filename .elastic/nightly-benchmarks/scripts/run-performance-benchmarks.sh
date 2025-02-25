@@ -257,7 +257,7 @@ run_serving_tests() {
 send_to_es() { 
   echo $1
   echo $2
-  python3 -m send_to_es.py --commit_id $1 --commit_title $2
+  python3 -m send_to_es.py --commit_id "$1" --commit_title "$2"
 }
 
 

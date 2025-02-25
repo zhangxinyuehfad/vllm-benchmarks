@@ -22,6 +22,6 @@ def send_data(data_instance: Dict[str, List[Union[ServingDataEntry, LatencyDataE
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    data_instance = data_prc('/root/wl/oldfiles/vllm-project/vllm-benchmarks/benchmarks/results', args.commit_id, args.commit_title)
+    data_instance = data_prc('../benchmarks/results', args.commit_id, args.commit_title)
     send_data(data_instance)
     

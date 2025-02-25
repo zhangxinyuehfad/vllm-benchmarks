@@ -43,7 +43,7 @@ class ServingDataEntry(BaseDataEntry):
     mean_itl_ms: float
     median_itl_ms: float
     p99_itl_ms: float
-    request_rate: int
+    request_rate: str
 
 
 # Throughput
