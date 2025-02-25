@@ -139,7 +139,7 @@ jobs:
           }' | jq -r '.hits.hits[]._id')
 
           echo "commit_id: ${ commit_id_cur }"
-          grep -vFf <(echo "$commit_id_cur") commit_log.txt > ../vllm-benchmarks/filtered_commit_log.txt
+          grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
 
           if [ -s filtered_commit_log.txt ]; then
             echo "Filtered commit log is not empty."
