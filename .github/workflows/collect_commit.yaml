@@ -28,19 +28,7 @@ jobs:
     container:
       image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
       volumes:
-        - /usr/local/dcmi:/usr/local/dcmi
-        - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
-        - /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/
         - /home/wl/actions-runner/_work/cache:/github/home/.cache/
-      options: >-
-        --device /dev/davinci6
-        --device /dev/davinci_manager
-        --device /dev/devmm_svm
-        --device /dev/hisi_hdc
-      env:
-        HF_ENDPOINT: https://hf-mirror.com
-        SHAREGPT_PATH: /github/home/.cache/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
-        LLAMA_3_1_8B_PATH: /github/home/.cache/models/Meta-Llama-3-8B-Instruct
     steps:
       - name: Config mirrors
         run: |
@@ -50,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update -y 
-          apt-get -y install curl git jq
+          apt-get -y install curl git jq gh
 
       - name: Setup proxy
         run: |
@@ -105,8 +93,14 @@ jobs:
           fi
 
           cat filtered_commit_log.txt
-      - name: Save to cache
+
+      - name: Run benchmark iteration
         working-directory: ./vllm-ascend
-        if: success()
         run: |
-          mv filtered_commit_log.txt /github/home/.cache/
+          while IFS= read -r line; do
+            commit_id=$(echo "$line" | awk '{print $1}')
+            commit_title=$(echo "$line" | cut -d ' ' -f2-)
+            echo "commit_id: $commit_id"
+            echo "commit_title: $commit_title"
+            echo "------------------------"
+          done < filtered_commit_log.txt

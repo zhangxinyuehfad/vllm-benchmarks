@@ -2,15 +2,15 @@ from doctest import FAIL_FAST
 import os
 import requests
 import json
-import warnings
-import re
-from urllib3.exceptions import InsecureRequestWarning
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import logging
 
 
 logger = logging.getLogger()
+
+os.environ['ES_DOAMIN'] = "https://190.92.234.172:9200"
+os.environ['ES_AUTHORIZATION'] = "Basic YWRtaW46bkJLWkU3Q2NLRk5oNGdRUExCZEA"
+
 
 ES_DOAMIN = os.getenv("ES_DOAMIN")
 ES_AUTHORIZATION = os.getenv("ES_AUTHORIZATION")
@@ -20,33 +20,13 @@ class DataHandler():
     def __init__(self):
         self.headers = {
             "Content-Type": "application/x-ndjson",
-            "Authorization": ES_AUTHORIZATION
+            "Authorization": "Basic YWRtaW46bkJLWkU3Q2NLRk5oNGdRUExCZEA"
         }
-        self.domain = ES_DOAMIN
+        self.domain = 'https://190.92.234.172:9200'
         self._index_name = "vllm_benchmarks"
-        self.display_fields = []
-        self.field_order = []
-        self._create_at = "created_at"
-
-
-    @property
-    def create_at(self):
-        """
-        field_names: 查询表展示的选项 如果不存在则为空
-        只影响展示表格的结果 不影响查询结果
-        """
-        return self._create_at
-
-    @create_at.setter
-    def create_at(self, value: list):
-        self._create_at = value
-
 
     @property
     def index_name(self):
-        """
-        index_name: 查询的表名
-        """
         return self._index_name
 
 
@@ -56,12 +36,6 @@ class DataHandler():
 
 
     def create_table_with_property_type(self, property_type: dict):
-        """
-        创建表并设置字段类型
-        不要改非float的字段 会出问题
-        property_type: {"rank": {"type": "float"},
-                        "star": {"type": "float"}}
-        """
         try:
             data = {
                 "settings": {
@@ -85,9 +59,6 @@ class DataHandler():
 
 
     def get_table_property_type(self):
-        """
-        用于检查表的property是否为数值类型
-        """
         try:
             url = f"{self.domain}/{self._index_name}/_mapping"
             resp = requests.get(
@@ -101,9 +72,6 @@ class DataHandler():
 
 
     def delete_index(self, index_name):
-        """
-        慎用
-        """
         try:
             url = f"{self.domain}/{index_name}"
             resp = requests.delete(
@@ -117,9 +85,6 @@ class DataHandler():
 
 
     def reindex(self, source_idx, dest_idx):
-        """
-        重命名表
-        """
         data = {
             "source": {
                 "index": source_idx
@@ -139,26 +104,6 @@ class DataHandler():
 
 
     def _format_query_items(self, query_items: dict):
-        """
-        格式化查询内容
-        query_item = {'file_project': 'pytorch/pytorch'}的格式化数据为
-        插入数据格式 此处只修改bool
-        data = {
-            'query': {
-                'bool': {
-                    'must': [
-                        {
-                            'match_phrase': {
-                                'file_project': {'query': 'pytorch/pytorch'}
-                            }
-                        }
-                    ]
-                }
-            },
-            'size': 5000,
-            'sort': [{'Date': {'order': 'desc'}}]
-        }
-        """
         query_bool = {"bool": {}}
         must_list = list()
         if query_items:
@@ -176,10 +121,6 @@ class DataHandler():
 
 
     def _query_scroll_search(self, query_items=None, query_range=None):
-        """
-        scroll search
-        query_items和query_range同时传入仅显示query_range结果
-        """
         url = f"{self.domain}/{self._index_name}/_search?scroll=1m"
         data = {
             "query": {"match_all": {}},
@@ -252,9 +193,6 @@ class DataHandler():
 
 
     def _qr_get_table_field(self, field_names, create_show):
-        """
-        有时候不需要create_at
-        """
         res: list = list()
         if not self.display_fields:
             res = self._qr_remove_create(field_names, create_show)
@@ -274,7 +212,6 @@ class DataHandler():
         try:
             res: list = list()
             for ele in self.field_order:
-                # index能找到就找 找不到就pass
                 try:
                     idx = field_names.index(ele)
                     res.append(idx)
@@ -286,13 +223,6 @@ class DataHandler():
 
 
     def query_record(self, query_items=None, query_range=None, log_table=True, create_show=False):
-        """
-        查询表项
-        query_items={"Type": "test"}
-        query_range={"range": {"Date": {"gte": "2024-10-01", "lte": "2025-01-01"}}}
-        log_table是否向日志文件中记录
-        create_show是否显示create_at和ID项 主要用于raw数据插入
-        """
         if not query_items:
             query_items = dict()
 
@@ -334,16 +264,16 @@ class DataHandler():
         except Exception as e:
             raise Exception(e)
 
-    def search_data_from_vllm(self):
-        url = f'{self.domain}/{self.index_name}/_search'
+    def search_data_from_vllm(self, _index: str, source: bool=False, size: int=1000):
+        url = f'{self.domain}/{_index}/_search'
         data = {
-            "_source": True,
+            "_source": source,
             "size": 20,
             "query": {
             "match_all": {}
                 },
             "sort": [
-            { "create_at": { "order": "desc" } }  # 按时间倒序排序
+            { "created_at": { "order": "desc" } } 
         ]
         }
         resp =  requests.post(
@@ -352,9 +282,7 @@ class DataHandler():
             json=data,
             verify=False
         )
-        # print(resp.json())
         return resp.json()
-        
 
     def _format_data_for_bulk_insert(self, data_list):
         """
@@ -378,7 +306,6 @@ class DataHandler():
             actions += json.dumps(item) + "\n"
         return actions
 
-
     def add_single_data(self, id: str, data: dict):
         url = f'{self.domain}/{self.index_name}/_doc/{id}'
         header = self.headers.copy()
@@ -396,10 +323,8 @@ class DataHandler():
             logger.error(f'failed to add data {req_err}', exc_info=True)
         except Exception as other_err:
             logger.error(f'failed to add data {other_err}', exc_info=True)
-
         
-
-    def query_today(self):
+    def query_today(self, index_name):
         query = {
             "query": {
                 "range": {
@@ -411,7 +336,7 @@ class DataHandler():
                 }
             }
         }
-        url = f'{self.domain}/{self.index_name}/_search'
+        url = f'{self.domain}/{index_name}/_search'
         header = self.headers.copy()
         header['Content-Type'] = 'application/json'
         try:
@@ -451,14 +376,7 @@ class DataHandler():
         except Exception as other_err:
             logger.error(f"Unexpected error during single update: {other_err}", exc_info=True)
 
-
     def _bulk_insert(self, data_list: list):
-        """
-        数据插入总接口
-        data_list: [[data_id1, item1],[data_id2, item2]]
-                   item = {"file_project": ...,
-                           "Type": ...,}
-        """
         if not data_list:
             return
         interval = 1000
@@ -473,11 +391,7 @@ class DataHandler():
                 bulk_json = self._format_data_for_bulk_insert(sub_list)
                 self._put_bulk(bulk_json)
 
-    # 插入数据
     def _put_bulk(self, bulk_json):
-        """
-        调用ES API插入内容
-        """
         if not bulk_json or bulk_json == "":
             return
 
@@ -501,77 +415,6 @@ class DataHandler():
         except Exception as otherError:
             logger.info(f"Insert Exception:\n{otherError}")
 
-
-    def _data_insert_process_raw_data(self,
-                                      all_lines,
-                                      aim_field=None,
-                                      dest_name=None):
-        """
-        插入原始数据不查重
-        处理prettytable表形式的str结果
-        """
-        fields = all_lines[1].strip()[1:-1].split("|")
-        fields = [f.strip() for f in fields]
-        aim_idx = None
-        try:
-            aim_idx = fields.index(aim_field)
-        except:  # 异常再刷成None
-            aim_idx = None
-        n = len(fields)
-        data_list: list = list()
-        for line in all_lines[3:]:
-            if line.startswith("+-----") or line.strip() == "":
-                continue
-
-            values = line.strip()[1:-1].split("|")
-            data_id = values[0].strip()
-            # data_id = values[1].strip() + values[2].strip() + values[3].strip()
-            item = {}
-            for i in range(1, n):
-                item[fields[i]] = values[i].strip()
-                if aim_idx and aim_idx == i and dest_name:  # 批量修改某一项
-                    item[fields[i]] = dest_name
-
-            data_list.append([data_id, item])
-
-        self._bulk_insert(data_list)
-
-
-    def _get_lines_from_file(self, file_path):
-        """
-        file.readlines()
-        """
-        with open(file_path, "r", encoding="utf-8") as file:
-            return file.readlines()
-
-
-    def data_insert_with_raw_data(self, file_path):
-        """
-        插入原始数据不查重
-        修改查询后的数据表 直接通过file_path插入
-        可给table新增某项内容一起插入
-        use 'query_record()' table to insert
-        """
-        all_lines = self._get_lines_from_file(file_path)
-
-        self._data_insert_process_raw_data(all_lines)
-
-
-    def change_record_field(self, aim_item: dict, aim_field: str, dest_name: str):
-        """
-        查询aim_item数据 将所有Type的名字转为AIframework
-        aim_item: {"Type": "traditionML"}
-        aim_field: "Type"
-        dest_name: "AIframework"
-        """
-        table = self.query_record(query_items=aim_item, log_table=False, create_show=True)
-        logger.info(f"{self._index_name}: change [{aim_item}] to [{aim_field}/{dest_name}]")
-        if not table or not table._rows:
-            return
-        table_list = str(table).split("\n")
-        self._data_insert_process_raw_data(table_list, aim_field, dest_name)
-
-
     def _format_bulk_delete(self, id_lst):
         actions = ""
         for id in id_lst:
@@ -584,71 +427,15 @@ class DataHandler():
             actions += json.dumps(index_data) + "\n"
         return actions
 
-
     def delete_id_list_with_bulk_insert(self, id_lst: list):
-        """
-        更快 只调用一次api
-        """
         if not id_lst:
             return
 
         bulk_json = self._format_bulk_delete(id_lst)
         self._put_bulk(bulk_json)
 
-
-    def _process_delete_resp(self, text: str):
-        """
-        简单判断查询是否成功
-        """
-        pattern = r'"total":(\d+),"deleted":(\d+),"batches":(\d+)'
-        total, delete, batches = re.findall(pattern, text)[0]  # 一定有 不做异常处理 异常再说
-        if delete != "0":
-            return f'"total":{total},"deleted":{delete},"batches":{batches}'
-        return False
-
-
-    def _delete_by_query(self, query_items=None, all_clear=False):
-        """
-        _delete_by_query 删除总执行接口
-        """
-        if not all_clear and not query_items:
-            print('need query_items to delete')
-            return
-        data = {
-            "query": {}
-        }
-
-        if query_items:
-            query_bool = self._format_query_items(query_items)
-            data["query"].update(query_bool)
-
-        if all_clear:
-            data["query"] = {"match_all": {}}
-
-        data = json.dumps(data)
-        url = f"{self.domain}/{self._index_name}/_delete_by_query"
-        try:
-            resp = requests.post(
-                url,
-                data=data.encode("utf-8"),
-                headers=self.headers,
-                verify=False
-            )
-            processed_text = self._process_delete_resp(resp.text)
-            if processed_text:
-                logger.info(f"delete {processed_text}")
-            else:
-                logger.info(f"delete fail, id/query_items/all[{query_items}/{all_clear}]")
-        except Exception as e:
-            logger.info(f"Delete Exception: {e}")
-
-
     def delete_with_item(self, query_items: dict):
         self._delete_by_query(query_items=query_items)
 
-
     def delete_all_record(self):
         self._delete_by_query(all_clear=True)
-
-
-  

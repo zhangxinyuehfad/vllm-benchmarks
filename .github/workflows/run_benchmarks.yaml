@@ -3,7 +3,7 @@ name: 'benchmarks'
 
 on:
   workflow_run:
-    workflows: ["collect_commit"]
+    workflows: ["collect_commits"]
     types:
       - completed  # 监听 Workflow A 结束
 # on:
