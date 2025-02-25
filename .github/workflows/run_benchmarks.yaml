@@ -1,15 +1,13 @@
 name: 'benchmarks'
 
 on:
-  workflow_dispatch:
-    inputs:
-      commit_id:
-        description: 'Commit id of repo vllm-project/vllm-ascend to fetch'
-        required: true
-      commit_title:
-        description: 'Commit title'
-        required: true
-        default: 'None commit message found on this commit'
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '**/*.py'
+      - '.github/workflows/run_benchmarks.yaml'
+      - '!docs/**'
 
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
@@ -118,10 +116,57 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Collect pr info from vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
+        run: |
+          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
+          
+          commit_id_cur=$(curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
+          -H "Content-Type: application/x-ndjson" \
+          -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
+          -d '{
+            "_source": false,
+            "size": 10000,
+            "query": {
+              "match_all": {}
+            },
+            "sort": [
+              {
+                "created_at": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }' | jq -r '.hits.hits[]._id')
+          grep -vFf <(echo "$commit_id_cur") commit_log.txt > ../vllm-benchmarks/filtered_commit_log.txt
+
+          if [ -s filtered_commit_log.txt ]; then
+            echo "Filtered commit log is not empty."
+            cat filtered_commit_log.txt
+            exit 0  # 'success'
+          else
+            echo "Filtered commit log is empty!"
+            exit 78  # "skipped"
+          fi
+
+          cat filtered_commit_log.txt
+
+      - name: Run benchmark iteration
+        working-directory: ./vllm-benchmarks
+        run: |
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            commit_id=$(echo "$line" | awk '{print $1}')
+            commit_title=$(echo "$line" | cut -d ' ' -f2-)
+            echo "commit_id: $commit_id"
+            echo "commit_title: $commit_title"
+            echo "------------------------"
+            bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh $commit_id $commit_title
+          done < filtered_commit_log.txt
+
       - name: Run benchmarks
         working-directory: ./vllm-benchmarks
         run: | 
-          bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh
+          bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh 
       
       - name: Test ls RESULTS_FOLDER
         working-directory: ./vllm-benchmarks

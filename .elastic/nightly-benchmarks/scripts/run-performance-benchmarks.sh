@@ -253,7 +253,19 @@ run_serving_tests() {
   done
 }
 
+
+send_to_es() {
+
+}
+
+
 main() {
+  COMMIT_ID=$1
+  COMMIT_TITLE=$2
+  
+  echo $COMMIT_ID
+  echo $COMMIT_TITLE
+
   START_TIME=$(date +%s)
   check_npus
 
