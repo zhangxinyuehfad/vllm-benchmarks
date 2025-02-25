@@ -3,14 +3,14 @@ name: 'collect_commit'
 on:
   push:
     branches:
-      - "main"
+      - "dev"
     paths:
       - '*.txt'
       - '**/*.py'
       - '.github/workflows/collect_commit.yaml'
   pull_request:
     branches:
-      - "main"
+      - "dev"
     paths:
       - '*.txt'
       - '**/*.py'
