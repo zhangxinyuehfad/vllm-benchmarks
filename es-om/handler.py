@@ -8,21 +8,20 @@ import logging
 
 logger = logging.getLogger()
 
-os.environ['ES_DOAMIN'] = "https://190.92.234.172:9200"
-os.environ['ES_AUTHORIZATION'] = "Basic YWRtaW46bkJLWkU3Q2NLRk5oNGdRUExCZEA"
 
+ES_OM_DOMAIN = os.getenv("ES_OM_DOMAIN")
+ES_OM_AUTHORIZATION = os.getenv("ES_OM_AUTHORIZATION")
 
-ES_DOAMIN = os.getenv("ES_DOAMIN")
-ES_AUTHORIZATION = os.getenv("ES_AUTHORIZATION")
-
+print(ES_OM_DOMAIN)
+print(ES_OM_AUTHORIZATION)
 
 class DataHandler():
     def __init__(self):
         self.headers = {
             "Content-Type": "application/x-ndjson",
-            "Authorization": "Basic YWRtaW46bkJLWkU3Q2NLRk5oNGdRUExCZEA"
+            "Authorization": ES_OM_AUTHORIZATION
         }
-        self.domain = 'https://190.92.234.172:9200'
+        self.domain = ES_OM_DOMAIN
         self._index_name = "vllm_benchmarks"
 
     @property
@@ -359,7 +358,7 @@ class DataHandler():
         header['Content-Type'] = 'application/json'
         update_data = {'doc':data}
         try:
-            resp = requests.put(
+            resp = requests.post(
                 url, 
                 headers=header, 
                 json=update_data, 

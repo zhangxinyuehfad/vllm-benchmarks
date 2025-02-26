@@ -17,6 +17,11 @@ def prc_json_to_es(folder_path: Union[str, Path]):
     data_instance = data_prc(folder_path=folder_path)
     return data_instance
 
+
+def update_all_schema_time(commit_id: str, update_time: str):
+    
+
+
 if __name__ == '__main__':
 
     data_handler.index_name = 'vllm_benchmark_serving'

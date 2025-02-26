@@ -90,7 +90,7 @@ def extract_tp_value(s):
     match = re.search(r"tp(\d+)", s)
     return int(match.group(1)) if match else None
 
-def data_prc(folder_path: Union[str, Path], commit_id, commit_title) -> Dict[str,List[Union[ServingDataEntry, LatencyDataEntry, ThroughputDataEntry]]]:
+def data_prc(folder_path: Union[str, Path], commit_id, commit_title, created_at=None) -> Dict[str,List[Union[ServingDataEntry, LatencyDataEntry, ThroughputDataEntry]]]:
     commit_id = commit_id
     commit_title = commit_title
     json_data = read_from_json(folder_path)
@@ -105,7 +105,7 @@ def data_prc(folder_path: Union[str, Path], commit_id, commit_title) -> Dict[str
                     commit_title=commit_title,
                     test_name=test_name,
                     tp=tp,
-                    created_at=None,
+                    created_at=created_at,
                     request_rate=data['request_rate'],
                     mean_ttft_ms=data['mean_ttft_ms'],
                     median_ttft_ms=data['median_ttft_ms'],
@@ -123,7 +123,7 @@ def data_prc(folder_path: Union[str, Path], commit_id, commit_title) -> Dict[str
                     commit_title=commit_title,
                     test_name=test_name,
                     tp=tp,
-                    created_at=None,
+                    created_at=created_at,
                     mean_latency=convert_s_ms(data['avg_latency']),
                     median_latency=convert_s_ms(data['percentiles']['50']),
                     percentile_99=convert_s_ms(data['percentiles']['99']),
@@ -133,7 +133,7 @@ def data_prc(folder_path: Union[str, Path], commit_id, commit_title) -> Dict[str
                     commit_id=commit_id,
                     commit_title=commit_title,
                     test_name=test_name,
-                    created_at=None,
+                    created_at=created_at,
                     tp=tp,
                     requests_per_second=data['requests_per_second'],
                     tokens_per_second=data['tokens_per_second'],
