@@ -79,7 +79,7 @@ jobs:
         with:
           repository: vllm-project/vllm
           path: ./
-          ref: f61528d46d4f2e2b180a861ece4ca7311606882f
+          #ref: f61528d46d4f2e2b180a861ece4ca7311606882f
 
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
@@ -169,9 +169,4 @@ jobs:
             cd -
           done < filtered_commit_log.txt
 
-      
-      - name: Test ls RESULTS_FOLDER
-        working-directory: ./vllm-benchmarks
-        run: |
-          ls benchmarks/results
           
