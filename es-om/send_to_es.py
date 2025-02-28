@@ -2,7 +2,6 @@ import argparse
 from typing import Union, Dict, List
 
 from handler import DataHandler
-from timer import get_datetime
 from data import data_prc, ServingDataEntry, LatencyDataEntry, ThroughputDataEntry
 
 parser = argparse.ArgumentParser(description='add commit msg to es')

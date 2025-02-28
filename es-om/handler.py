@@ -1,8 +1,6 @@
-from doctest import FAIL_FAST
 import os
 import requests
 import json
-from datetime import datetime
 import logging
 
 

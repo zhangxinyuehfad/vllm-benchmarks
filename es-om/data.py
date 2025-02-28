@@ -9,9 +9,6 @@ import json
 from datetime import datetime
 from argparse import ArgumentParser
 
-from pandas import read_json
-
-
 
 cli_parser = ArgumentParser()
 

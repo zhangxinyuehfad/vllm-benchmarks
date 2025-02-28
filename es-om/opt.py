@@ -1,4 +1,3 @@
-from re import L
 from typing import Union
 from pathlib import Path
 from handler import DataHandler
@@ -19,7 +18,7 @@ def prc_json_to_es(folder_path: Union[str, Path]):
 
 
 def update_all_schema_time(commit_id: str, update_time: str):
-    
+    pass
 
 
 if __name__ == '__main__':
