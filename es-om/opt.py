@@ -24,4 +24,4 @@ def update_all_schema_time(commit_id: str, update_time: str):
 if __name__ == '__main__':
 
     data_handler.index_name = 'vllm_benchmark_serving'
-    data_handler.search_data_from_vllm(vllm_benchmark_serving)
+    print(data_handler.search_data_from_vllm('vllm_benchmark_serving'))

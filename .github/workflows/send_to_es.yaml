@@ -1,0 +1,59 @@
+name: 'test'
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '.github/workflows/send_to_es.yaml'
+      - '!docs/**'
+
+
+# Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
+# declared as "shell: bash -el {0}" on steps that need to be properly activated.
+# It's used to activate ascend-toolkit environment variables.
+defaults:
+  run:
+    shell: bash -el {0}
+
+jobs:
+  test:
+    name: test es (self-host)
+    runs-on: ascend-arcch64  # actionlint-ignore: runner-label
+
+    container:
+      image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
+      volumes:
+        - /home/wl/actions-runner/_work/cache:/github/home/.cache/
+      env:
+        ES_OM_DOMAIN: ${{ secrets.ES_OM_DOMAIN }}
+        ES_OM_AUTHORIZATION: ${{ secrets.ES_OM_AUTHORIZATION }}
+    steps:
+      - name: Config mirrors
+        run: |
+          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+      - name: Install system dependencies
+        run: |
+          apt-get update -y
+          apt-get -y install git jq wget curl lsof
+
+      - name: Setup proxy
+        run: |
+          nohup /github/home/.cache/clash/clash \
+          -d ./clash -d /github/home/.cache/clash > /github/home/.cache/clash/clash.log 2>&1 &
+
+          # wait for clash up
+          sleep 5
+          
+          git config --global http.proxy "http://127.0.0.1:7890"
+          git config --global https.proxy "http://127.0.0.1:7890" 
+
+      - name: Checkout cosdt/vllm-benchmarks
+        uses: actions/checkout@v4
+
+      - name: test es
+        run: |
+          cd es-om
+          python opt.py          
