@@ -1,5 +1,4 @@
 import argparse
-from tkinter import SE
 from typing import Union, Dict, List
 
 from handler import DataHandler
