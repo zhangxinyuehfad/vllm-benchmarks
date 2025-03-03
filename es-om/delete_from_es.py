@@ -11,9 +11,3 @@ id_to_delete = ['94cd66bba7b8e90a4b00eb92649b1239aabf3780',
                 '14bca9911a265bb3c75708dbd4fcdfe56d267db4',
                 'b64ee7d346511b6ea7a64b09db58c17aa1c915ef'
                 ]
-
-data_handler = DataHandler()
-data_handler.index_name = 'vllm_benchmark_serving'
-
-for _id in id_to_delete:
-    da

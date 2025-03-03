@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from operator import index
 import pytz
 
 from handler import DataHandler
@@ -43,12 +44,11 @@ id_to_delete = ['94cd66bba7b8e90a4b00eb92649b1239aabf3780',
                 ]
 
 data_handler = DataHandler()
-data_handler.index_name = 'vllm_benchmark_serving'
+data_handler.index_name = 'vllm_benchmark_throughput'
 
 # for _id in id_to_delete:
 #     for i in ['1.0', '4.0', '16.0', 'inf']:
 #         index = _id+'_'+ i
 #         data = data_handler.search_data_from_vllm(data_handler.index_name, source=True)
 #         print(data['hits']['hits'])
-
-print(data_handler.get_table_property_type())
+print(data_handler.condition_query(index_name=data_handler.index_name, conditions={'commit_id': id_to_delete}))

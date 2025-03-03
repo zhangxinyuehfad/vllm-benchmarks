@@ -266,7 +266,7 @@ class DataHandler():
         url = f'{self.domain}/{_index}/_search'
         data = {
             "_source": source,
-            "size": 20,
+            "size": 1000,
             "query": {
             "match_all": {}
                 },
@@ -327,7 +327,7 @@ class DataHandler():
             "query": {
                 "range": {
                     "created_at": {
-                        "gte": "now-2d/d",
+                        "gte": "now-5d/d",
                         "lt": "now/d",
                     }
                 }
@@ -349,6 +349,39 @@ class DataHandler():
     
         except Exception as other_err:
             logger.error(f"Unexpected error during single search: {other_err}", exc_info=True)
+
+    def condition_query(self, index_name, conditions):
+        """
+        查询指定索引下满足条件的所有 `_id`
+        :param index_name: Elasticsearch 索引名
+        :param conditions: 字段匹配条件（字典格式）
+                           - `terms`: { "field_name": [value1, value2, ...] }  多个值匹配
+                           - `range`: { "field_name": { "gte": value1, "lt": value2 } }  范围匹配
+        :return: 匹配的 `_id` 列表
+        """
+        query = {"query": {"bool": {"must": []}}}
+
+        for field, condition in conditions.items():
+            if isinstance(condition, dict):  # 处理 range 查询
+                query["query"]["bool"]["must"].append({"range": {field: condition}})
+            elif isinstance(condition, list):  # 处理 terms 查询
+                query["query"]["bool"]["must"].append({"terms": {field: condition}})
+            else:  # 处理 match 查询（单个值）
+                query["query"]["bool"]["must"].append({"match": {field: condition}})
+
+        url = f"{self.domain}/{index_name}/_search"
+        header = self.headers.copy()
+        header['Content-Type'] = 'application/json'
+        payload = {"_source": False, "size": 10000, "query": query} # 只获取 _id，最多 10000 条
+        try:
+            resp = requests.post(url, headers=header, data=payload, verify=False)
+            resp.raise_for_status()
+            hits = resp.json().get("hits", {}).get("hits", [])
+            return [hit["_id"] for hit in hits]
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+            return []
+
 
     def update_data_for_exist_id(self, id: str, data: dict):
         url = f'{self.domain}/{self.index_name}/_update/{id}'
