@@ -28,7 +28,10 @@ def get_abs_dir():
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()
-    data_instance = data_prc(get_abs_dir(), args.commit_id, args.commit_title)
-    send_data(data_instance)
+    # args = parser.parse_args()
+    # data_instance = data_prc(get_abs_dir(), args.commit_id, args.commit_title)
+    # send_data(data_instance)
+    data_handler = DataHandler()
+    res = data_handler.search_data_from_vllm('vllm_benchmark_throughput')
+    print(res)
     

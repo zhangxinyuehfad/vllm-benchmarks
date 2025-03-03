@@ -23,7 +23,6 @@ def send_data(data_instance: Dict[str, List[Union[ServingDataEntry, LatencyDataE
 
 if __name__ == '__main__':
     datahandler = DataHandler()
-    datahandler.index_name = ("vllm_test")
-    #datahandler.add_single_data("dsagfasgf", {'flag': 'test', 'created_at': get_datetime(3)})
-    #datahandler.update_data_for_exist_id('dsagfasgf', {'created_at': get_datetime(2)})
-    print(datahandler.search_data_from_vllm('vllm_test', source=True))
+    datahandler.index_name = ("vllm_benchmark_serving")
+    datahandler.update_data_for_exist_id('6042c210bc715573a65c76209445a3d92054c1a6_1.0', {'commit_title': '[CI] upgrade to newest pta (#187)'})
+    

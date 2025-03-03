@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 
 check_npus() {
   declare -g npu_count=$(npu-smi info -l | grep "Total Count" | awk -F ':' '{print $2}' | tr -d ' ')
