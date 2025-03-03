@@ -107,10 +107,10 @@ jobs:
           cd ..
           rm -rf pta
 
-      - name: Checkout cosdt/vllm-benchmarks repo
+      - name: Checkout nv-action/vllm-benchmarks repo
         uses: actions/checkout@v4
         with:
-          repository: cosdt/vllm-benchmarks
+          repository: nv-action/vllm-benchmarks
           path: ./vllm-benchmarks
       
       - name: Install benchmark dependencies
