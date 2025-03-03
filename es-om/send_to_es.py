@@ -30,6 +30,5 @@ def get_abs_dir():
 if __name__ == '__main__':
     args = parser.parse_args()
     data_instance = data_prc(get_abs_dir(), args.commit_id, args.commit_title)
-    # send_data(data_instance)
-    print(data_instance)
+    send_data(data_instance)
     
