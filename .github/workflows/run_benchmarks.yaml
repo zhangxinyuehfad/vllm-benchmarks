@@ -169,5 +169,3 @@ jobs:
             bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh $commit_id $commit_title
             cd -
           done < filtered_commit_log.txt
-
-          
