@@ -51,4 +51,4 @@ data_handler.index_name = 'vllm_benchmark_throughput'
 #         index = _id+'_'+ i
 #         data = data_handler.search_data_from_vllm(data_handler.index_name, source=True)
 #         print(data['hits']['hits'])
-print(data_handler.condition_query(index_name=data_handler.index_name, conditions={'commit_id': id_to_delete}))
+print(data_handler.search_data_from_vllm(data_handler.index_name))
