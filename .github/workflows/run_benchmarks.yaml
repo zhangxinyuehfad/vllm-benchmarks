@@ -80,7 +80,6 @@ jobs:
           repository: vllm-project/vllm
           path: ./
           
-          #ref: f61528d46d4f2e2b180a861ece4ca7311606882f
 
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
