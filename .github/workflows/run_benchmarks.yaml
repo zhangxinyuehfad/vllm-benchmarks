@@ -55,8 +55,13 @@ jobs:
 
       - name: Config mirrors
         run: |
-          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+          # sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+      - name: Install system dependencies
+        run: |
+          apt-get update -y
+          apt-get -y install git jq wget curl lsof
 
       - name: Setup proxy
         run: |
@@ -68,11 +73,6 @@ jobs:
           
           git config --global http.proxy "http://127.0.0.1:7890"
           git config --global https.proxy "http://127.0.0.1:7890" 
-
-      - name: Install system dependencies
-        run: |
-          apt-get update -y
-          apt-get -y install git jq wget curl lsof
 
       - name: Checkout vllm-project/vllm repo
         uses: actions/checkout@v4
