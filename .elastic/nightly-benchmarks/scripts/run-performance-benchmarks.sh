@@ -261,8 +261,8 @@ send_to_es() {
 }
 
 main() {
-  COMMIT_ID=$1
-  COMMIT_TITLE=$2
+  COMMIT_ID="$1"
+  COMMIT_TITLE="$2"
   
   echo $COMMIT_ID
   echo $COMMIT_TITLE
@@ -293,7 +293,9 @@ main() {
   run_latency_tests $QUICK_BENCHMARK_ROOT/tests/latency-tests.json
   run_throughput_tests $QUICK_BENCHMARK_ROOT/tests/throughput-tests.json
 
-  send_to_es   $COMMIT_ID $COMMIT_TITLE
+  send_to_es   $COMMIT_ID "$COMMIT_TITLE"
+
+  rm -rf $RESULTS_FOLDER
 
   END_TIME=$(date +%s)
   ELAPSED_TIME=$((END_TIME - START_TIME))

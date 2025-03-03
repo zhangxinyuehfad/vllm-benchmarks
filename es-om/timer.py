@@ -31,5 +31,24 @@ def update_all_schema_time(commit_id: str=None, created_at: str=None):
                 dataHandler.update_data_for_exist_id(_id, {"created_at": get_datetime()})
 
 
-if __name__ == '__main__':
-    update_all_schema_time()
+
+id_to_delete = ['94cd66bba7b8e90a4b00eb92649b1239aabf3780', 
+                'ee43179767ba1a61be543ed42beca276bee061eb', 
+                'fd18ae649453fa4c31b58b04ba75d3fd9ed0b3d4',
+                '6042c210bc715573a65c76209445a3d92054c1a6',
+                'c131e43e7d5983b394d6846de432b3a0d7031935',
+                '1715230867048aaf3102dbe6448b3c476db74c9e',
+                '14bca9911a265bb3c75708dbd4fcdfe56d267db4',
+                'b64ee7d346511b6ea7a64b09db58c17aa1c915ef'
+                ]
+
+data_handler = DataHandler()
+data_handler.index_name = 'vllm_benchmark_serving'
+
+# for _id in id_to_delete:
+#     for i in ['1.0', '4.0', '16.0', 'inf']:
+#         index = _id+'_'+ i
+#         data = data_handler.search_data_from_vllm(data_handler.index_name, source=True)
+#         print(data['hits']['hits'])
+
+print(data_handler.get_table_property_type())

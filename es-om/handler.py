@@ -326,10 +326,9 @@ class DataHandler():
         query = {
             "query": {
                 "range": {
-                    "create_at": {
-                        "gte": "now/d",
-                        "lt": "now+1d/d",
-                        "time_zone": "+08:00"
+                    "created_at": {
+                        "gte": "now-2d/d",
+                        "lt": "now/d",
                     }
                 }
             }
@@ -338,7 +337,7 @@ class DataHandler():
         header = self.headers.copy()
         header['Content-Type'] = 'application/json'
         try:
-            resp = requests.post(url, header, query, verify=False)
+            resp = requests.post(url, headers=header, json=query, verify=False)
             resp.raise_for_status()
             logger.info(f'search  successful')
             return resp.json()
