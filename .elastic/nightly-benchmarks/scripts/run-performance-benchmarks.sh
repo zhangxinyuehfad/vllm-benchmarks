@@ -257,15 +257,13 @@ run_serving_tests() {
 send_to_es() { 
   echo $1
   echo $2
-  python3 ../es-om/send_to_es.py --commit_id "$1" --commit_title "$2"
+  python3 ../es-om/send_to_es.py --commit_id "$1" --commit_title "$2" --commit_time "$3"
 }
 
 main() {
   COMMIT_ID="$1"
   COMMIT_TITLE="$2"
-  
-  echo $COMMIT_ID
-  echo $COMMIT_TITLE
+  COMMIT_TIME="$3"
 
   START_TIME=$(date +%s)
   check_npus
@@ -293,7 +291,7 @@ main() {
   run_latency_tests $QUICK_BENCHMARK_ROOT/tests/latency-tests.json
   run_throughput_tests $QUICK_BENCHMARK_ROOT/tests/throughput-tests.json
 
-  send_to_es   $COMMIT_ID "$COMMIT_TITLE"
+  send_to_es   $COMMIT_ID "$COMMIT_TITLE" "$COMMIT_TIME"
 
   rm -rf $RESULTS_FOLDER
 

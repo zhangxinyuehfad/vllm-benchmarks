@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from operator import index
 import pytz
+import subprocess
 
 from handler import DataHandler
 from db import get_es_schema
@@ -44,11 +45,18 @@ id_to_delete = ['94cd66bba7b8e90a4b00eb92649b1239aabf3780',
                 ]
 
 data_handler = DataHandler()
-data_handler.index_name = 'vllm_benchmark_throughput'
+data_handler.index_name = 'vllm_benchmark_serving'
 
-# for _id in id_to_delete:
-#     for i in ['1.0', '4.0', '16.0', 'inf']:
-#         index = _id+'_'+ i
-#         data = data_handler.search_data_from_vllm(data_handler.index_name, source=True)
-#         print(data['hits']['hits'])
-print(data_handler.search_data_from_vllm(data_handler.index_name))
+data_list = data_handler.get_field_value(data_handler.index_name, ['commit_id', 'created_at', 'commit_title'])
+for data in data_list:
+    commit_id = data.get('commit_id', None)
+    print(data)
+    if commit_id:
+        result = subprocess.run(
+            ["git", '-C', '/Users/wangli/vllm-ascend', "show", "-s", "--format=%cd", commit_id, "--date=iso-strict"],
+            capture_output=True, text=True
+        )
+        created_at = result.stdout.strip()
+        created_at = str.split(created_at, "+")[0]
+        print(created_at)
+        data_handler.update_data_for_exist_id(index_name=data['_index'], id=data['_id'], data={'created_at': created_at})

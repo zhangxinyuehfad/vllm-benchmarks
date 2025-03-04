@@ -1,3 +1,4 @@
+from typing import List
 import os
 import requests
 import json
@@ -270,9 +271,9 @@ class DataHandler():
             "query": {
             "match_all": {}
                 },
-            "sort": [
-            { "created_at": { "order": "desc" } } 
-        ]
+        #     "sort": [
+        #     { "created_at": { "order": "desc" } } 
+        # ]
         }
         resp =  requests.post(
             url=url,
@@ -281,6 +282,20 @@ class DataHandler():
             verify=False
         )
         return resp.json()
+
+    def get_field_value(self, index_name, fields: List[str]) -> List[dict]:
+        data = self.search_data_from_vllm(index_name, source=True)
+        hits = data['hits']['hits']
+        res = []
+        for hit in hits:
+            source = hit['_source']
+            res.append(
+                {'_index': index_name,
+                 '_id': hit['_id'],
+                 **{field: source.get(field, None) for field in fields}
+                 }
+            )
+        return res
 
     def _format_data_for_bulk_insert(self, data_list):
         """
@@ -383,8 +398,8 @@ class DataHandler():
             return []
 
 
-    def update_data_for_exist_id(self, id: str, data: dict):
-        url = f'{self.domain}/{self.index_name}/_update/{id}'
+    def update_data_for_exist_id(self, index_name: str,  id: str, data: dict):
+        url = f'{self.domain}/{index_name}/_update/{id}'
         header = self.headers.copy()
         header['Content-Type'] = 'application/json'
         update_data = {'doc':data}
@@ -396,7 +411,7 @@ class DataHandler():
                 verify=False,
                 )
             resp.raise_for_status()
-            logger.info(f'update data {self.index_name}/{id} successful')
+            logger.info(f'update data {index_name}/{id} successful')
         except requests.exceptions.RequestException as req_err:
             logger.error(f"Request error during update: {req_err}", exc_info=True)
 

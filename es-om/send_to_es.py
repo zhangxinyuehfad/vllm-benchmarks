@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser(description='add commit msg to es')
 
 parser.add_argument('--commit_id', type=str, required=True)
 parser.add_argument('--commit_title', type=str, required=True)
+parser.add_argument('--commit_time', type=str, required=True)
 
 
 def send_data(data_instance: Dict[str, List[Union[ServingDataEntry, LatencyDataEntry, ThroughputDataEntry]]]):
@@ -29,6 +30,6 @@ def get_abs_dir():
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    data_instance = data_prc(get_abs_dir(), args.commit_id, args.commit_title)
+    data_instance = data_prc(get_abs_dir(), args.commit_id, args.commit_title, args.commit_time)
     send_data(data_instance)
     
