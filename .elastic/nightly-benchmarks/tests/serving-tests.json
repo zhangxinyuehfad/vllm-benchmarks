@@ -44,7 +44,8 @@
       "backend": "vllm",
       "dataset_name": "sharegpt",
       "dataset_path": "SHAREGPT_PATH",
-      "num_prompts": 200
+      "num_prompts": 200,
+      "max_model_len": 4096
     }
   }
 ]
