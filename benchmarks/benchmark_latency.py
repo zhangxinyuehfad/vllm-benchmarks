@@ -100,12 +100,14 @@ def main(args: argparse.Namespace):
     for percentage, percentile in zip(percentages, percentiles):
         print(f'{percentage}% percentile latency: {percentile} seconds')
 
+    model_name = args.model.spilt("/")[-1]
     # Output JSON results if specified
     if args.output_json:
         results = {
             "avg_latency": np.mean(latencies),
             "latencies": latencies.tolist(),
             "percentiles": dict(zip(percentages, percentiles.tolist())),
+            "model_name": model_name
         }
         with open(args.output_json, "w") as f:
             json.dump(results, f, indent=4)

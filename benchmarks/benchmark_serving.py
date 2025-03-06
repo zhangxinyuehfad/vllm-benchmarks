@@ -949,6 +949,7 @@ def main(args: argparse.Namespace):
         result_json["tokenizer_id"] = tokenizer_id
         result_json["best_of"] = args.best_of
         result_json["num_prompts"] = args.num_prompts
+        result_json["model_name"] = args.model.spilt("/")[-1]
 
         # Metadata
         if args.metadata:
