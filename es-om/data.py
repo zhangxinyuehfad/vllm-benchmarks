@@ -18,6 +18,7 @@ class BaseDataEntry:
     commit_id: str
     commit_title: str
     test_name: str
+    model_name: str
     tp: int
     created_at: Union[str, None]
 
@@ -103,6 +104,7 @@ def data_prc(folder_path: Union[str, Path], commit_id, commit_title, created_at=
                     test_name=test_name,
                     tp=tp,
                     created_at=created_at,
+                    model_name = data['model_name'],
                     request_rate=data['request_rate'],
                     mean_ttft_ms=data['mean_ttft_ms'],
                     median_ttft_ms=data['median_ttft_ms'],
@@ -119,6 +121,7 @@ def data_prc(folder_path: Union[str, Path], commit_id, commit_title, created_at=
                     commit_id=commit_id,
                     commit_title=commit_title,
                     test_name=test_name,
+                    model_name = data['model_name'],
                     tp=tp,
                     created_at=created_at,
                     mean_latency=convert_s_ms(data['avg_latency']),
@@ -129,6 +132,7 @@ def data_prc(folder_path: Union[str, Path], commit_id, commit_title, created_at=
                 res_instance["vllm_benchmark_throughput"].append(ThroughputDataEntry(
                     commit_id=commit_id,
                     commit_title=commit_title,
+                    model_name = data['model_name'],
                     test_name=test_name,
                     created_at=created_at,
                     tp=tp,
