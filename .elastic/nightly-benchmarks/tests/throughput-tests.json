@@ -9,18 +9,6 @@
       "num_prompts": 200,
       "backend": "vllm"
     }
-  },
-  {
-    "test_name": "throughput_qwen2_5_tp1",
-    "parameters": {
-      "model": "QWEN_2_5_PATH",
-      "tensor_parallel_size": 1,
-      "load_format": "dummy",
-      "dataset_path": "SHAREGPT_PATH",
-      "num_prompts": 200,
-      "backend": "vllm",
-      "max_model_len": 4096
-    }
   }
 ]
 
