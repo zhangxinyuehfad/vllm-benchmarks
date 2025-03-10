@@ -105,11 +105,12 @@ jobs:
                 }
               }
             ]
-          }' | jq -r '.hits.hits[]._id')
+          }' | jq -r '.hits.hits[]._id' | cut -d'_' -f1)
 
           echo "cur_commit_id: $commit_id_cur "
 
-          grep -vFf <(echo "${commit_id_cur%%_*}") commit_log.txt > filtered_commit_log.txt
+          # we only test commit which 
+          grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
 
           if [ -s filtered_commit_log.txt ]; then
             echo "\nFiltered commit log is not empty."
