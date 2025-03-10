@@ -3,12 +3,7 @@ from common import VLLM_SCHEMA
 
 
 data_handler = DataHandler()
-for schema in VLLM_SCHEMA:
-    res = data_handler.search_data_from_vllm(schema, source=True)
-    print(schema)
-    res = res['hits']['hits']
-    for r in res:
-        print(r['_id'])
-        print(r['_source'].get('created_at', None))
-        print(r['_source'].get('commit_title', None))
-    print()
+
+for index in VLLM_SCHEMA:
+    data_handler.index_name = index
+    data_handler.delete_id_list_with_bulk_insert(['3217f0d10fbbc6e6cc8b0db9594b8cef515b4f90_Meta-Llama-3-8B-Instruct'])

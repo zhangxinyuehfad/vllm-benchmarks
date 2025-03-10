@@ -17,8 +17,12 @@ def send_data(data_instance: Dict[str, List[Union[ServingDataEntry, LatencyDataE
     for index_name, data_list in data_instance.items():
         datahandler.index_name = index_name
         for data in data_list:
-            insert_id = "_".join([data.commit_id, str(data.request_rate)]) if hasattr(data, 'request_rate') else data.commit_id
-            insert_id = "_".join([data.commit_id, data.model_name])
+            _id = data.commit_id[:8]
+            if isinstance(data, ServingDataEntry):
+                insert_id = "_".join([_id, str(data.request_rate)])
+            else:
+                insert_id = _id
+            insert_id = "_".join([insert_id, data.model_name])
             datahandler.add_single_data(insert_id, data.to_dict())
 
 
