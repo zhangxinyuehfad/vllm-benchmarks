@@ -348,7 +348,7 @@ def main(args: argparse.Namespace):
             "total_num_tokens": total_num_tokens,
             "requests_per_second": len(requests) / elapsed_time,
             "tokens_per_second": total_num_tokens / elapsed_time,
-            "model_name": args.model.spilt("/")[-1]
+            "model_name": args.model.split("/")[-1]
         }
         with open(args.output_json, "w") as f:
             json.dump(results, f, indent=4)
