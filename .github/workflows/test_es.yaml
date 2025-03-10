@@ -109,7 +109,7 @@ jobs:
 
           echo "cur_commit_id: $commit_id_cur "
 
-          grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
+          grep -vFf <(echo "${commit_id_cur%%_*}") commit_log.txt > filtered_commit_log.txt
 
           if [ -s filtered_commit_log.txt ]; then
             echo "\nFiltered commit log is not empty."
