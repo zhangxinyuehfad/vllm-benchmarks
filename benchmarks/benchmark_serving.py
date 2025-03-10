@@ -1280,11 +1280,6 @@ if __name__ == "__main__":
                         help="A subset of LoRA module names passed in when "
                         "launching the server. For each request, the "
                         "script chooses a LoRA module at random.")
-    
-    parser.add_argument("--max-model-len",
-                        type=int,
-                        default=None,)
-    
 
     args = parser.parse_args()
     main(args)

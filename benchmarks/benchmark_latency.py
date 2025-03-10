@@ -149,10 +149,6 @@ if __name__ == '__main__':
         default=None,
         help='Path to save the latency results in JSON format.')
     
-    parser.add_argument("--max-model-len",
-                        type=int,
-                        default=None,)
-
     parser = EngineArgs.add_cli_args(parser)
     args = parser.parse_args()
     main(args)

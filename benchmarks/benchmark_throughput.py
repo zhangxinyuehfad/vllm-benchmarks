@@ -401,9 +401,6 @@ if __name__ == "__main__":
                         default=False,
                         help="Disable decoupled async engine frontend.")
     
-    parser.add_argument("--max-model-len",
-                        type=int,
-                        default=None,)
     # LoRA
     parser.add_argument(
         "--lora-path",
