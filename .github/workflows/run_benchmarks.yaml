@@ -146,7 +146,7 @@ jobs:
           grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
 
           if [ -s filtered_commit_log.txt ]; then
-            echo "Filtered commit log is not empty."
+            echo "\nFiltered commit log is not empty."
             cat filtered_commit_log.txt
             exit 0  # 'success'
           else
