@@ -164,6 +164,7 @@ jobs:
 
             git checkout $commit_id
             git log --oneline -n 1
+            pip install -e .
             echo "commit_id: $commit_id"
             echo "commit_title: $commit_title"
             echo "commit_time: $commit_time_no_tz"
