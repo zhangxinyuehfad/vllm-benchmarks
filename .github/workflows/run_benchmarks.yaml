@@ -11,7 +11,7 @@ on:
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
-# It's used to activate ascend-toolkit environment variables.
+# It's used to activate ascend-toolkit environment variables. 
 defaults:
   run:
     shell: bash -el {0}
@@ -81,7 +81,6 @@ jobs:
           repository: vllm-project/vllm
           path: ./
           
-
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
