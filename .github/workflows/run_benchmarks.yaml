@@ -7,6 +7,45 @@ on:
     paths:
       - '.github/workflows/run_benchmarks.yaml'
       - '!docs/**'
+  
+  schedule:
+    - cron: '0 12 * * *'
+
+  workflow_dispatch:
+    inputs:
+      runner:
+        required: true
+        type: choice
+        options:
+          - npu-arm64
+          - linux-arm64-npu-0
+          - linux-arm64-npu-1
+          - linux-arm64-npu-2
+          - linux-arm64-npu-4
+        default: 'linux-arm64-npu-1'
+        description: 'The runner selected to run on'
+      image:
+        required: true
+        type: choice
+        options:
+          - quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
+          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
+        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
+        description: 'The docker image which will be loaded'
+      device:
+        required: true
+        type: choice
+        options:
+          - /dev/davinci1
+          - /dev/davinci2
+          - /dev/davinci3
+          - /dev/davinci4
+          - /dev/davinci5
+          - /dev/davinci6
+          - /dev/davinci7
+          - /dev/davinci8
+        default: '/dev/davinci5'
+        description: 'The device selected to run on'
 
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
