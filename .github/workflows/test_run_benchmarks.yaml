@@ -55,6 +55,8 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
 
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+         token: ${{ secrets.GITHUB_TOKEN }}
 
