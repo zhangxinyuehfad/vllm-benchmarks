@@ -40,7 +40,10 @@ jobs:
         run: |
           sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-
+      - name: Install dependencies
+        run: | 
+          apt-get update -y
+          apt-get install git
       # See: https://github.com/actions/checkout/issues/363#issuecomment-1915075699
       # See: https://github.com/hunshcn/gh-proxy/issues/28#issuecomment-773769630
       - name: Config git
@@ -50,6 +53,3 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-         token: ${{ secrets.GITHUB_TOKEN }}
-
