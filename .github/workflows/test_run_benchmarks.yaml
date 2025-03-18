@@ -1,4 +1,4 @@
-name: '_ascend_npu_benchmark'
+name: 'npu_benchmark'
 
 on:
   workflow_call:
@@ -96,6 +96,10 @@ jobs:
         working-directory: ./vllm-benchmarks
         run: |
           pip install -r requirements.txt
+      
+      - name: Download model
+        run: |
+          modelscope download --model LLM-Research/Meta-Llama-3.1-8B-Instruct
 
       - name: Run benchmark iteration
         working-directory: ./vllm-ascend

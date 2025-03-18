@@ -1,4 +1,4 @@
-name: '_ascend_npu_benchmark'
+name: 'multi_npu_test'
 
 on:
   workflow_dispatch:
