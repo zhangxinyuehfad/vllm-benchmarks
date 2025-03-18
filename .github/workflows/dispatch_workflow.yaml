@@ -74,7 +74,7 @@ jobs:
     name: Run benchmarks
     needs:
       - prepare
-    uses: ./.github/workflows/test_run_benchmarks.yml
+    uses: ./.github/workflows/test_run_benchmarks.yaml
     with:
       runner: ${{ needs.prepare.outputs.runner }}
       image: ${{ needs.prepare.outputs.image }}
