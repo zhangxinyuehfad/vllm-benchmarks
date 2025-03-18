@@ -60,6 +60,10 @@ jobs:
           apt-get update -y
           apt-get -y install git jq wget curl
       
+      - name: Install huggingface-cli
+        run: |
+          pip install huggingface-hub[cli]
+      
       - name: Download model
         run: |
           echo $HF_ENDPOINT
