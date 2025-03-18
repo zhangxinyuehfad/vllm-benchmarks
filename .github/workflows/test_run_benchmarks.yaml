@@ -27,6 +27,7 @@ jobs:
       image: ${{ inputs.image }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
+        VLLM_USE_MODELSCOPE: true
     steps:
       - name: Show NPU info
         run: |
