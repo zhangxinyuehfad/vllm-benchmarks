@@ -30,9 +30,9 @@ defaults:
 jobs:
   test:
     name: run benchmarks for torch_npu
-    runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}"
+    runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-4' }}
     container:
-      image: ${{ github.event.inputs.image || 'ascendai/cann:latest' }}"
+      image: ${{ github.event.inputs.image || 'ascendai/cann:latest' }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
         VLLM_USE_MODELSCOPE: true
