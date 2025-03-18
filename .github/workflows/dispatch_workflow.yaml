@@ -1,0 +1,81 @@
+name: 'vLLM-ascend ci suitcase'
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  # repository_dispatch:
+  #   types: 
+
+  workflow_dispatch:
+    inputs:
+      runner:
+        required: true
+        type: choice
+        options:
+          - npu-arm64
+          - linux-arm64-npu-0
+          - linux-arm64-npu-1
+          - linux-arm64-npu-2
+          - linux-arm64-npu-4
+        default: 'linux-arm64-npu-1'
+        description: 'The runner selected to run on'
+      image:
+        required: true
+        type: choice
+        options:
+          - quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
+          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
+        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
+        description: 'The docker image which will be loaded'
+      device:
+        required: true
+        type: choice
+        options:
+          - /dev/davinci1
+          - /dev/davinci2
+          - /dev/davinci3
+          - /dev/davinci4
+          - /dev/davinci5
+          - /dev/davinci6
+          - /dev/davinci7
+          - /dev/davinci8
+        default: '/dev/davinci5'
+        description: 'The device selected to run on'
+
+# Only cancel the previous runs when triggered by a pull_request event
+#
+# TODO: As the doc says, there can be at most one running and one pending job
+#       in a concurrency group at any time. But we want all workflows to be
+#       queued, not cancelled. This is a shortcomings of GitHub Actions.
+#
+# Doc: https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
+# Discussion: https://github.com/orgs/community/discussions/5435
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.client_payload.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.set-env.outputs.runner }}
+      image: ${{ steps.set-env.outputs.image }}
+      device: ${{ steps.set-env.outputs.device }}
+    steps:
+      - name: Set environment params
+        id: set-env
+        run: |
+          echo "runner=${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}" >> $GITHUB_OUTPUT
+          echo "device=${{ github.event.inputs.device || '/dev/davinci5' }}" >> $GITHUB_OUTPUT
+          echo "image=${{ github.event.inputs.image || 'ascendai/cann:latest' }}" >> $GITHUB_OUTPUT
+
+  benchmark:
+    name: Run benchmarks
+    needs:
+      - prepare
+    uses: ./.github/workflows/test_run_benchmarks.yml
+    with:
+      runner: ${{ needs.prepare.outputs.runner }}
+      image: ${{ needs.prepare.outputs.image }}
+      device: ${{ needs.prepare.outputs.device }}
