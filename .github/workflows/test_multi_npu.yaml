@@ -58,11 +58,11 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update -y
-          apt-get -y install git jq wget curl lsof
+          apt-get -y install git jq wget curl
 
       - name: test es
         run: |
-          commit_id_cur=$(curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
+          curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
           -H "Content-Type: application/x-ndjson" \
           -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
           -d '{
@@ -78,5 +78,4 @@ jobs:
                 }
               }
             ]
-          }' | jq -r '.hits.hits[]._id' | cut -d'_' -f1)
-          echo "cur_commit_id: $commit_id_cur""
+          }'
