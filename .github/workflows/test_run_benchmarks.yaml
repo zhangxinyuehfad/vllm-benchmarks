@@ -35,16 +35,20 @@ jobs:
       - name: Show NPU info
         run: |
           npu-smi info
-
+      
+      - name: Check env
+        run: |
+                  
       - name: Config mirrors
         run: |
           sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-          
+
       - name: Install system dependencies
         run: |
           apt-get update -y
           apt-get -y install git jq wget curl lsof
+
       # See: https://github.com/actions/checkout/issues/363#issuecomment-1915075699
       # See: https://github.com/hunshcn/gh-proxy/issues/28#issuecomment-773769630
       - name: Config git
@@ -52,5 +56,101 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
 
-      - name: Checkout repository
+      - name: Checkout vllm-project/vllm repo
         uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm
+          path: ./
+          
+      - name: Checkout vllm-project/vllm-ascend repo
+        uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm-ascend
+          path: ./vllm-ascend
+          fetch-depth: 0
+
+      - name: Install vllm-project/vllm from source
+        run: |
+          VLLM_TARGET_DEVICE=empty pip install -e .
+
+      - name: Install vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
+        run: |
+          pip install -e .
+
+      - name: Install pta
+        run: |
+          mkdir pta
+          cd pta
+          wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250308.3/pytorch_v2.5.1_py310.tar.gz
+          tar -xvf pytorch_v2.5.1_py310.tar.gz
+          pip install ./torch_npu-2.5.1.dev20250308-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+          cd ..
+          rm -rf pta
+
+      - name: Checkout nv-action/vllm-benchmarks repo
+        uses: actions/checkout@v4
+        with:
+          repository: nv-action/vllm-benchmarks
+          path: ./vllm-benchmarks
+      
+      - name: Install benchmark dependencies
+        working-directory: ./vllm-benchmarks
+        run: |
+          pip install -r requirements.txt
+
+      - name: Collect pr info from vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
+        run: |
+          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
+          cat commit_log.txt
+          
+          commit_id_cur=$(curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
+          -H "Content-Type: application/x-ndjson" \
+          -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
+          -d '{
+            "_source": false,
+            "size": 10000,
+            "query": {
+              "match_all": {}
+            },
+            "sort": [
+              {
+                "created_at": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }' | jq -r '.hits.hits[]._id' | cut -d'_' -f1)
+
+          grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
+
+          if [ -s filtered_commit_log.txt ]; then
+            echo "Filtered commit log is not empty."
+            cat filtered_commit_log.txt
+            exit 0  # 'success'
+          else
+            echo "Filtered commit log is empty!"
+            exit 78  # "skipped"
+          fi
+
+      - name: Run benchmark iteration
+        working-directory: ./vllm-ascend
+        run: |
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            commit_id=$(echo "$line" | awk '{print $1}')
+            commit_title=$(echo "$line" | cut -d ' ' -f2-)
+            commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
+            commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
+
+            git checkout $commit_id
+            git log --oneline -n 1
+            pip install -e .
+            echo "commit_id: $commit_id"
+            echo "commit_title: $commit_title"
+            echo "commit_time: $commit_time_no_tz"
+            echo "------------------------"
+            cd ../vllm-benchmarks
+            bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
+            cd -
+          done < filtered_commit_log.txt
