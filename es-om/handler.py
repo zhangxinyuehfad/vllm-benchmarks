@@ -7,8 +7,6 @@ import logging
 
 logger = logging.getLogger()
 
-os.environ['ES_OM_DOMAIN'] = 'https://190.92.234.172:9200'
-os.environ['ES_OM_AUTHORIZATION'] = 'Basic YWRtaW46bkJLWkU3Q2NLRk5oNGdRUExCZEA'
 ES_OM_DOMAIN = os.getenv("ES_OM_DOMAIN")
 ES_OM_AUTHORIZATION = os.getenv("ES_OM_AUTHORIZATION")
 

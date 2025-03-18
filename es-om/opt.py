@@ -19,9 +19,3 @@ def prc_json_to_es(folder_path: Union[str, Path]):
 
 def update_all_schema_time(commit_id: str, update_time: str):
     pass
-
-
-if __name__ == '__main__':
-
-    data_handler.index_name = 'vllm_benchmark_serving'
-    print(data_handler.search_data_from_vllm('vllm_benchmark_serving'))

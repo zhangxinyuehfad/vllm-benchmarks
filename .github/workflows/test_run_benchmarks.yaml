@@ -41,13 +41,6 @@ jobs:
           sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
-      - name: Install system dependencies
-        run: |
-          apt-get update
-          apt-get install -y \
-              git gcc g++ make cmake ninja-build curl \
-              libgl1 libglib2.0-0 libsndfile1
-
       # See: https://github.com/actions/checkout/issues/363#issuecomment-1915075699
       # See: https://github.com/hunshcn/gh-proxy/issues/28#issuecomment-773769630
       - name: Config git
