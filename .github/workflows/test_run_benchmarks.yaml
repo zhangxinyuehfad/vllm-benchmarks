@@ -111,5 +111,7 @@ jobs:
             echo "commit_time: $commit_time_no_tz"
             echo "------------------------"
             cd ../vllm-benchmarks
-            bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
+            # bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
+            vllm serve LLM-Research/Meta-Llama-3.1-8B-Instruct --trust-remote-code --max-model-len 8192
+            sleep 3600
             cd -
