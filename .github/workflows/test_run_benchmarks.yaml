@@ -100,18 +100,11 @@ jobs:
       - name: Run benchmark iteration
         working-directory: ./vllm-ascend
         run: |
-            pwd
-            commit_id="sdasasg"
-            commit_title="test"
-            commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
-            commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
+          pwd
+          commit_id="sdasasg"
+          commit_title="test"
+          commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
+          commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
 
-            echo "commit_id: $commit_id"
-            echo "commit_title: $commit_title"
-            echo "commit_time: $commit_time_no_tz"
-            echo "------------------------"
-            cd ../vllm-benchmarks
-            # bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
-            vllm serve LLM-Research/Meta-Llama-3.1-8B-Instruct --trust-remote-code 
-            sleep 3600
-            cd -
+          cd ../vllm-benchmarks
+          bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
