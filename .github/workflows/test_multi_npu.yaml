@@ -62,7 +62,7 @@ jobs:
       
       - name: Download model
         run: |
-          echo $HF-ENDPOINT
+          echo $HF_ENDPOINT
           huggingface-cli download --resume-download deepseek-ai/DeepSeek-V2-Lite
           huggingface-cli download --resume-download Qwen/QwQ-32B
           huggingface-cli download --resume-download meta-llama/Llama-3.1-8B-Instruct 
