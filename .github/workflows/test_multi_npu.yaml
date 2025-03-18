@@ -59,23 +59,28 @@ jobs:
         run: |
           apt-get update -y
           apt-get -y install git jq wget curl
-
-      - name: test es
+      
+      - name: Download model
         run: |
-          curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
-          -H "Content-Type: application/x-ndjson" \
-          -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
-          -d '{
-            "_source": false,
-            "size": 10000,
-            "query": {
-              "match_all": {}
-            },
-            "sort": [
-              {
-                "created_at": {
-                  "order": "desc"
-                }
-              }
-            ]
-          }'
+          huggingface-cli download --resume-download deepseek-ai/DeepSeek-V2-Lite
+          huggingface-cli download --resume-download Qwen/QwQ-32B
+          huggingface-cli download --resume-download meta-llama/Llama-3.1-8B-Instruct
+      # - name: test es
+      #   run: |
+      #     curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
+      #     -H "Content-Type: application/x-ndjson" \
+      #     -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
+      #     -d '{
+      #       "_source": false,
+      #       "size": 10000,
+      #       "query": {
+      #         "match_all": {}
+      #       },
+      #       "sort": [
+      #         {
+      #           "created_at": {
+      #             "order": "desc"
+      #           }
+      #         }
+      #       ]
+      #     }'
