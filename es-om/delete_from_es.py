@@ -1,13 +1,26 @@
-from timer import get_datetime
+from numpy import source
 from handler import DataHandler
+from common import VLLM_SCHEMA
 
 
-id_to_delete = ['94cd66bba7b8e90a4b00eb92649b1239aabf3780', 
-                'ee43179767ba1a61be543ed42beca276bee061eb', 
-                'fd18ae649453fa4c31b58b04ba75d3fd9ed0b3d4',
-                '6042c210bc715573a65c76209445a3d92054c1a6',
-                'c131e43e7d5983b394d6846de432b3a0d7031935',
-                '1715230867048aaf3102dbe6448b3c476db74c9e',
-                '14bca9911a265bb3c75708dbd4fcdfe56d267db4',
-                'b64ee7d346511b6ea7a64b09db58c17aa1c915ef'
+id_to_delete = ['12aa7115b58e6def5603e4eae6744f0af8e05634',
+                '3217f0d10fbbc6e6cc8b0db9594b8cef515b4f90',
+                '0db6670bfab8cb1d84c9e7270df0a1d42d6ce7ca'
                 ]
+
+ids = []
+
+datahandler = DataHandler()
+for schema in VLLM_SCHEMA:
+    datahandler.index_name = schema
+    doc = datahandler.search_data_from_vllm(schema, source=True)
+    data = doc['hits']['hits']
+    for value in data:
+        _id = value['_id']
+        _source = value['_source']
+        commit_id = _source.get('commit_id', None)
+        if commit_id in id_to_delete:
+            ids.append(_id)
+    print(ids)
+    datahandler.delete_id_list_with_bulk_insert(ids)
+    ids.clear()
