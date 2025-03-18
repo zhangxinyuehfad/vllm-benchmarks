@@ -98,6 +98,7 @@ jobs:
       - name: Run benchmark iteration
         working-directory: ./vllm-ascend
         run: |
+            pwd
             commit_id="sdasasg"
             commit_title="test"
             commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
@@ -108,5 +109,6 @@ jobs:
             echo "commit_time: $commit_time_no_tz"
             echo "------------------------"
             cd ../vllm-benchmarks
+            git checkout -b ci origin/ci
             bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
             cd -
