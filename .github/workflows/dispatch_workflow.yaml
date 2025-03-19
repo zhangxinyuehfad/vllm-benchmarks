@@ -30,6 +30,7 @@ on:
         options:
           - Qwen/QwQ-32B
           - Qwen/Qwen2-7B
+          - LLM-Research/Meta-Llama-3.1-8B-Instruct
         default: 'Qwen/QwQ-32B'
         description: 'The model selected to run' 
 
