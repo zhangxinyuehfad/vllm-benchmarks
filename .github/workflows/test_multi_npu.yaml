@@ -100,21 +100,4 @@ jobs:
     
       - name: Run benchmark iteration
         run: |
-          bash -c "vllm serve ${{ inputs.model }} --tensor-parallel-size 4 &"
-          timeout 3600 bash -c '
-          until curl -X POST localhost:8000/v1/completions; do
-           sleep 1
-          done'
-          curl http://localhost:8000/v1/chat/completions \
-          -H "Content-Type: application/json" \
-          -d '{
-          "model": "${{ inputs.model }}",
-          "messages": [
-          {"role": "system", "content": "You are a helpful assistant."},
-          {"role": "user", "content": [
-               {"type": "text", "text": "who are you?"}
-          ]}
-          ]
-          }'
-          npu-smi info
-          sleep 3566
+          bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh dsafas ssaf fasfas
