@@ -11,6 +11,10 @@ on:
         required: true
         type: string
         description: 'The docker image which will be loaded'
+      model:
+        required: true
+        type: string
+        description: 'The model selected to run'
 
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
@@ -22,13 +26,13 @@ defaults:
 
 jobs:
   test:
-    name: run benchmarks for torch_npu
+    name: run benchmarks
     runs-on: ${{ inputs.runner }}
     container:
       image: ${{ inputs.image }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
-        VLLM_USE_MODELSCOPE: true
+        # VLLM_USE_MODELSCOPE: true
     steps:
       - name: Check npu and CANN info
         run: |
@@ -96,5 +100,5 @@ jobs:
     
       - name: Run benchmark iteration
         run: |
-          vllm serve LLM-Research/Meta-Llama-3.1-8B-Instruct --tensor-parallel-size 4
+          vllm serve ${{ inputs.model }} --tensor-parallel-size 4
           sleep 3500

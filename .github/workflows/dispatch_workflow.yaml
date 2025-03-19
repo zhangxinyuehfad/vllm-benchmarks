@@ -25,6 +25,15 @@ on:
           - quay.io/ascend/vllm-ascend:v0.7.3rc1
         default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
         description: 'The docker image which will be loaded'
+      
+      model:
+        required: true
+        type: choice
+        options:
+          - Qwen/QwQ-32B
+          - Qwen/Qwen2-7B
+        default: 'Qwen/QwQ-32B'
+        description: 'The model selected to run' 
 
 # Only cancel the previous runs when triggered by a pull_request event
 #
@@ -45,12 +54,14 @@ jobs:
     outputs:
       runner: ${{ steps.set-env.outputs.runner }}
       image: ${{ steps.set-env.outputs.image }}
+      model: ${{ steps.set-env.outputs.model }}
     steps:
       - name: Set environment params
         id: set-env
         run: |
           echo "runner=${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}" >> $GITHUB_OUTPUT
           echo "image=${{ github.event.inputs.image || 'ascendai/cann:latest' }}" >> $GITHUB_OUTPUT
+          echo "image=${{ github.event.inputs.model || 'Qwen/QwQ-32B' }}" >> $GITHUB_OUTPUT
 
   benchmark-single:
     name: Run benchmarks
