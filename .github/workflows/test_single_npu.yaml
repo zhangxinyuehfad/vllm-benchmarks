@@ -1,4 +1,4 @@
-name: 'npu_benchmark'
+name: 'single_npu_benchmark'
 
 on:
   workflow_call:

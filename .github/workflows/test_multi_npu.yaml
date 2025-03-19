@@ -1,22 +1,15 @@
 name: 'multi_npu_test'
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       runner:
         required: true
-        type: choice
-        options:
-          - linux-arm64-npu-4
-        default: 'linux-arm64-npu-4'
+        type: string
         description: 'The runner selected to run on'
       image:
         required: true
-        type: choice
-        options:
-          - quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
-          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
-        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
+        type: string
         description: 'The docker image which will be loaded'
 
 
@@ -30,9 +23,9 @@ defaults:
 jobs:
   test:
     name: run benchmarks for torch_npu
-    runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-4' }}
+    runs-on: ${{ inputs.runner }}
     container:
-      image: ${{ github.event.inputs.image || 'ascendai/cann:latest' }}
+      image: ${{ inputs.image }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
         VLLM_USE_MODELSCOPE: true
@@ -41,14 +34,6 @@ jobs:
         run: |
           npu-smi info
           cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
-
-      - name: Check env var
-        run: |
-          echo ${SHAREGPT_PATH}
-          echo ${LLAMA_3_1_8B_PATH}
-          echo ${RESULTS_FOLDER}
-          echo $ES_OM_DOMAIN
-          echo $ES_OM_AUTHORIZATION
 
       - name: Config mirrors
         run: |
@@ -59,14 +44,57 @@ jobs:
         run: |
           apt-get update -y
           apt-get -y install git jq wget curl
-      
-      - name: Install huggingface-cli
+
+      - name: Config git
         run: |
-          pip install huggingface-hub[cli]
-      
-      - name: Download model
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
+
+      - name: Checkout vllm-project/vllm repo
+        uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm
+          path: ./
+          
+      - name: Checkout vllm-project/vllm-ascend repo
+        uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm-ascend
+          path: ./vllm-ascend
+          fetch-depth: 0
+
+      - name: Install vllm-project/vllm from source
         run: |
-          echo $HF_ENDPOINT
-          huggingface-cli download --resume-download deepseek-ai/DeepSeek-V2-Lite
-          huggingface-cli download --resume-download Qwen/QwQ-32B
-          huggingface-cli download --resume-download meta-llama/Llama-3.1-8B-Instruct 
+          VLLM_TARGET_DEVICE=empty pip install -e .
+
+      - name: Install vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
+        run: |
+          pip install -e .
+
+      - name: Install pta
+        run: |
+          mkdir pta
+          cd pta
+          wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250308.3/pytorch_v2.5.1_py310.tar.gz
+          tar -xvf pytorch_v2.5.1_py310.tar.gz
+          pip install ./torch_npu-2.5.1.dev20250308-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+          cd ..
+          rm -rf pta
+
+      - name: Checkout nv-action/vllm-benchmarks repo
+        uses: actions/checkout@v4
+        with:
+          repository: nv-action/vllm-benchmarks
+          fetch-depth: 0
+          path: ./vllm-benchmarks
+      
+      - name: Install benchmark dependencies
+        working-directory: ./vllm-benchmarks
+        run: |
+          pip install -r requirements.txt
+    
+      - name: Run benchmark iteration
+        run: |
+          vllm serve LLM-Research/Meta-Llama-3.1-8B-Instruct --tensor-parallel-size 2
+          sleep 3500
