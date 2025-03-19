@@ -99,6 +99,6 @@ jobs:
           pip install -r requirements.txt
     
       - name: Run benchmark iteration
-        working-directory: ./nv-action/vllm-benchmarks
+        working-directory: ./vllm-benchmarks
         run: |
           bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh dsafas ssaf fasfas
