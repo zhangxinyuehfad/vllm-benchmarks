@@ -64,7 +64,7 @@ jobs:
 
   benchmark-multi:
     name: Run benchmarks multiple
-    if: input.runner == 'linux-arm64-npu-4'
+    if: inputs.runner == 'linux-arm64-npu-4'
     needs:
       - prepare
     uses: ./.github/workflows/test_multi_npu.yaml
