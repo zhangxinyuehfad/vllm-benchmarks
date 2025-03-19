@@ -57,7 +57,7 @@ jobs:
     if: inputs.runner == 'linux-arm64-npu-1'
     needs:
       - prepare
-    uses: ./.github/workflows/test_run_benchmarks.yaml
+    uses: ./.github/workflows/test_single_npu.yaml
     with:
       runner: ${{ needs.prepare.outputs.runner }}
       image: ${{ needs.prepare.outputs.image }}
