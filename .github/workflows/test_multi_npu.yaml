@@ -96,5 +96,5 @@ jobs:
     
       - name: Run benchmark iteration
         run: |
-          vllm serve LLM-Research/Meta-Llama-3.1-8B-Instruct --tensor-parallel-size 2
+          vllm serve LLM-Research/Meta-Llama-3.1-8B-Instruct --tensor-parallel-size 4
           sleep 3500
