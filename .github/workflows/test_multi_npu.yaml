@@ -100,11 +100,11 @@ jobs:
     
       - name: Run benchmark iteration
         run: |
-          bash -c vllm serve ${{ inputs.model }} --tensor-parallel-size 4 &
-          timeout 1200 bash -c '
+          bash -c "vllm serve ${{ inputs.model }} --tensor-parallel-size 4 &"
+          timeout 3600 bash -c '
           until curl -X POST localhost:8000/v1/completions; do
            sleep 1
-          done' && return 0 || return 1
+          done'
           curl http://localhost:8000/v1/chat/completions \
           -H "Content-Type: application/json" \
           -d '{
