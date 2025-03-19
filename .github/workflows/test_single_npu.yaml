@@ -27,7 +27,6 @@ jobs:
       image: ${{ inputs.image }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
-        VLLM_USE_MODELSCOPE: true
     steps:
       - name: Show NPU info
         run: |
@@ -53,58 +52,10 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
 
-      - name: Checkout vllm-project/vllm repo
-        uses: actions/checkout@v4
-        with:
-          repository: vllm-project/vllm
-          path: ./
-          
-      - name: Checkout vllm-project/vllm-ascend repo
-        uses: actions/checkout@v4
-        with:
-          repository: vllm-project/vllm-ascend
-          path: ./vllm-ascend
-          fetch-depth: 0
-
-      - name: Install vllm-project/vllm from source
+      - name: Install huggingface-cli
         run: |
-          VLLM_TARGET_DEVICE=empty pip install -e .
-
-      - name: Install vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
-        run: |
-          pip install -e .
-
-      - name: Install pta
-        run: |
-          mkdir pta
-          cd pta
-          wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250308.3/pytorch_v2.5.1_py310.tar.gz
-          tar -xvf pytorch_v2.5.1_py310.tar.gz
-          pip install ./torch_npu-2.5.1.dev20250308-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-          cd ..
-          rm -rf pta
-
-      - name: Checkout nv-action/vllm-benchmarks repo
-        uses: actions/checkout@v4
-        with:
-          repository: nv-action/vllm-benchmarks
-          fetch-depth: 0
-          path: ./vllm-benchmarks
+          pip install huggingface-hub[cli]
       
-      - name: Install benchmark dependencies
-        working-directory: ./vllm-benchmarks
+      - name: Download model
         run: |
-          pip install -r requirements.txt
-    
-      - name: Run benchmark iteration
-        working-directory: ./vllm-ascend
-        run: |
-          pwd
-          commit_id="sdasasg"
-          commit_title="test"
-          commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
-          commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
-
-          cd ../vllm-benchmarks
-          bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
+          huggingface-cli download --resume-download Qwen/Qwen2-7B
