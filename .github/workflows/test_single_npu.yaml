@@ -39,6 +39,8 @@ jobs:
           echo "hf_token: $HF_TOKEN"
           echo "mock_token: $MOCK_TOKEN"
           echo "mock_token_bk: ${{ secrets.MOCK_TOKEN }}"
+          cd ~/.cache/huggingface/hub/
+          ls
                   
       - name: Config mirrors
         run: |
