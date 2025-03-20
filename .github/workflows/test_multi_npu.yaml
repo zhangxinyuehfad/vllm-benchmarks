@@ -37,6 +37,8 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         # VLLM_USE_MODELSCOPE: true
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        ES_OM_DOMAIN: ${{ secrets.ES_OM_DOMAIN }}
+        ES_OM_AUTHORIZATION: ${{ secrets.ES_OM_AUTHORIZATION }}
     steps:
       - name: Check npu and CANN info
         run: |
@@ -80,7 +82,7 @@ jobs:
         run: |
           pip install -e .
 
-      - name: Install pta
+      - name: Download pta
         run: |
           mkdir pta
           cd pta
@@ -94,14 +96,50 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: nv-action/vllm-benchmarks
-          fetch-depth: 0
           path: ./vllm-benchmarks
       
       - name: Install benchmark dependencies
         working-directory: ./vllm-benchmarks
         run: |
           pip install -r requirements.txt
-    
+      
+      - name: Collect pr info from vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
+        run: |
+          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
+          cat commit_log.txt
+          
+          commit_id_cur=$(curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
+          -H "Content-Type: application/x-ndjson" \
+          -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
+          -d '{
+            "_source": false,
+            "size": 10000,
+            "query": {
+              "match_all": {}
+            },
+            "sort": [
+              {
+                "created_at": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }' | jq -r '.hits.hits[]._id' | cut -d'_' -f1)
+
+          grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
+
+          if [ -s filtered_commit_log.txt ]; then
+            echo "Filtered commit log is not empty."
+            cat filtered_commit_log.txt
+            exit 0  # 'success'
+          else
+            echo "Filtered commit log is empty!"
+            exit 78  # "skipped"
+          fi
+
+
+
       - name: Run benchmark iteration
         working-directory: ./vllm-ascend
         run: |
