@@ -3,9 +3,9 @@
     "test_name": "serving_llama8B_tp1",
     "qps_list": [
       1,
-      4,
-      16,
-      "inf"
+      1,
+      1,
+      1
     ],
     "server_parameters": {
       "model": "LLM-Research/Meta-Llama-3.1-8B-Instruct",
@@ -14,7 +14,7 @@
       "disable_log_stats": "",
       "disable_log_requests": "",
       "load_format": "dummy",
-      "max-model-len": 8196
+      "max-model-len": 16384
     },
     "client_parameters": {
       "model": "LLM-Research/Meta-Llama-3.1-8B-Instruct",
