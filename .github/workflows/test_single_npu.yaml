@@ -41,6 +41,15 @@ jobs:
           echo "mock_token_bk: ${{ secrets.MOCK_TOKEN }}"
           cd ~/.cache/huggingface/hub/
           ls
+          if [[ -z "$HF_TOKEN" ]]; then
+           echo "Error: HF_TOKEN is not set."
+           exit 1
+          elif [[ ! "$HF_TOKEN" =~ ^hf_ ]]; then
+           echo "Error: HF_TOKEN does not start with 'hf_'."
+          exit 1
+          else
+           echo "HF_TOKEN is set and valid."
+          fi
                   
       - name: Config mirrors
         run: |
