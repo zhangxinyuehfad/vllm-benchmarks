@@ -36,8 +36,7 @@ jobs:
         run: |
           echo "hf_endpoint: $HF_ENDPOINT"
           echo "hf_token: $HF_TOKEN"
-          cd ~/.cache/huggingface/hub/
-          ls
+          echo "hf: ${{ secrets.HF_TOKEN }}"
                   
       - name: Config mirrors
         run: |
