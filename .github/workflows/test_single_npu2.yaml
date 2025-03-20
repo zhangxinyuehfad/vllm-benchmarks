@@ -59,9 +59,6 @@ jobs:
           sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
-      - name: Install huggingface-cli
-        run: |
-          pip install huggingface-hub[cli]
       
       - name: Download model
         run: |
