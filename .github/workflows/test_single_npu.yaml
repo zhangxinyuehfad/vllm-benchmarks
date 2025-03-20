@@ -51,6 +51,8 @@ jobs:
           pip install huggingface-hub[cli]
       
       - name: Download model
+        env: 
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           echo $HF_TOKEN
           huggingface-cli download --resume-download meta-llama/Llama-3.1-8B-Instruct --token $HF_TOKEN
