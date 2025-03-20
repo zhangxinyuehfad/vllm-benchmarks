@@ -13,7 +13,8 @@
       "swap_space": 16,
       "disable_log_stats": "",
       "disable_log_requests": "",
-      "load_format": "dummy"
+      "load_format": "dummy",
+      "max-model-len": 8196
     },
     "client_parameters": {
       "model": "LLM-Research/Meta-Llama-3.1-8B-Instruct",
