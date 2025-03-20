@@ -8,7 +8,8 @@ on:
         type: choice
         options:
           - linux-arm64-npu-4
-        default: 'linux-arm64-npu-4'
+          - linux-arm64-npu-1
+        default: 'linux-arm64-npu-1'
         description: 'The runner selected to run on'
       image:
         required: true
@@ -102,10 +103,11 @@ jobs:
           pip install -r requirements.txt
     
       - name: Run benchmark iteration
-        working-directory: ./vllm-benchmarks
+        working-directory: ./vllm-ascend
         run: |
           COMMIT_ID=7330416de3fd2f8c6b9b82fb1ad0adfb9c70d483
           COMMIT_TITLE=$(git log -1 --pretty=%s 7330416de3fd2f8c6b9b82fb1ad0adfb9c70d483)
           COMMIT_TIME=$(git show -s --format=%cd $COMMIT_ID --date=iso-strict)
           COMMIT_TIME_NO_TZ=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
+          cd ../vllm-benchmarks
           bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$COMMIT_ID" "$COMMIT_TITLE" "$COMMIT_TIME_NO_TZ"
