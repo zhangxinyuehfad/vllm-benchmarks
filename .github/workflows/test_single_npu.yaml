@@ -58,4 +58,4 @@ jobs:
       
       - name: Download model
         run: |
-          huggingface-cli download --resume-download Qwen/Qwen2-7B
+          huggingface-cli download --resume-download --repo-type dataset anon8231489123/ShareGPT_Vicuna_unfiltered
