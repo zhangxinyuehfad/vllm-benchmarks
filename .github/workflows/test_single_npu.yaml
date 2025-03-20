@@ -25,9 +25,9 @@ jobs:
     runs-on: ${{ inputs.runner }}
     container:
       image: ${{ inputs.image }}
-    env:
-      HF_ENDPOINT: https://hf-mirror.com
-      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      env:
+        HF_ENDPOINT: https://hf-mirror.com
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
       - name: Show NPU info
         run: |
