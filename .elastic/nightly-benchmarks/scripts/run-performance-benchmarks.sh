@@ -16,9 +16,25 @@ check_npus() {
   echo "NPU type is: $npu_type"
 }
 
+check_hf_token() {
+  # check if HF_TOKEN is available and valid
+  if [[ -z "$HF_TOKEN" ]]; then
+    echo "Error: HF_TOKEN is not set."
+    exit 1
+  elif [[ ! "$HF_TOKEN" =~ ^hf_ ]]; then
+    echo "Error: HF_TOKEN does not start with 'hf_'."
+    exit 1
+  else
+    echo "HF_TOKEN is set and valid."
+  fi
+}
+
 ensure_sharegpt_downloaded() {
   local FILE=ShareGPT_V3_unfiltered_cleaned_split.json
-  wget https://hf-mirror.com/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/$FILE
+  if [ ! -f "$FILE" ]; then
+    wget https://hf-mirror.com/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/$FILE
+  else
+    echo "$FILE already exists."
 }
 
 ensure_model_downloaded() {
@@ -296,5 +312,6 @@ main() {
   echo "Total execution time: $ELAPSED_TIME seconds"
 
 }
+
 
 main "$@"

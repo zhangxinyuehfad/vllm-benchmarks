@@ -30,9 +30,10 @@ jobs:
     runs-on: ${{ inputs.runner }}
     container:
       image: ${{ inputs.image }}
-      env:
-        HF_ENDPOINT: https://hf-mirror.com
-        VLLM_USE_MODELSCOPE: true
+    env:
+      HF_ENDPOINT: https://hf-mirror.com
+      VLLM_USE_MODELSCOPE: true
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
       - name: Check npu and CANN info
         run: |
