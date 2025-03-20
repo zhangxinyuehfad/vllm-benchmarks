@@ -11,10 +11,6 @@ on:
         required: true
         type: string
         description: 'The docker image which will be loaded'
-      hf_token:
-        required: true
-        type: string
-        description: 'Secret access huggingface_hub'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -27,11 +23,13 @@ jobs:
   test:
     name: run benchmarks for torch_npu
     runs-on: ${{ inputs.runner }}
+    env: 
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     container:
       image: ${{ inputs.image }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
-        HF_TOKEN: ${{ inputs.hf_token }}
+        HF_TOKEN: $HF_TOKEN
     steps:
       - name: Show NPU info
         run: |
