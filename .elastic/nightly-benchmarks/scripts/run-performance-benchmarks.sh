@@ -285,7 +285,7 @@ main() {
   declare -g RESULTS_FOLDER=results
   mkdir -p $RESULTS_FOLDER
   
-
+  ensure_sharegpt_downloaded
   # benchmarking
   run_serving_tests $QUICK_BENCHMARK_ROOT/tests/serving-tests.json
   run_latency_tests $QUICK_BENCHMARK_ROOT/tests/latency-tests.json
