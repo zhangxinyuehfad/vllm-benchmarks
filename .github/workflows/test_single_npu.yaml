@@ -11,6 +11,10 @@ on:
         required: true
         type: string
         description: 'The docker image which will be loaded'
+      hf_token:
+        required: true
+        type: string
+        description: 'Secret access huggingface_hub'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -27,8 +31,7 @@ jobs:
       image: ${{ inputs.image }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        MOCK_TOKEN: ${{ secrets.MOCK_TOKEN }}
+        HF_TOKEN: ${{ inputs.hf_token }}
     steps:
       - name: Show NPU info
         run: |
@@ -37,19 +40,8 @@ jobs:
         run: |
           echo "hf_endpoint: $HF_ENDPOINT"
           echo "hf_token: $HF_TOKEN"
-          echo "mock_token: $MOCK_TOKEN"
-          echo "mock_token_bk: ${{ secrets.MOCK_TOKEN }}"
           cd ~/.cache/huggingface/hub/
           ls
-          if [[ -z "$HF_TOKEN" ]]; then
-           echo "Error: HF_TOKEN is not set."
-           exit 1
-          elif [[ ! "$HF_TOKEN" =~ ^hf_ ]]; then
-           echo "Error: HF_TOKEN does not start with 'hf_'."
-          exit 1
-          else
-           echo "HF_TOKEN is set and valid."
-          fi
                   
       - name: Config mirrors
         run: |
@@ -63,4 +55,4 @@ jobs:
       - name: Download model
         run: |
           echo $HF_TOKEN
-          huggingface-cli download --resume-download meta-llama/Llama-3.1-8B-Instruct --token "${{ secrets.HF_TOKEN }}" 
+          huggingface-cli download --resume-download meta-llama/Llama-3.1-8B-Instruct --token $HF_TOKEN" 

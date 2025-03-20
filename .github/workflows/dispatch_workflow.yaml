@@ -71,6 +71,7 @@ jobs:
     with:
       runner: ${{ needs.prepare.outputs.runner }}
       image: ${{ needs.prepare.outputs.image }}
+      hf_token: ${{ secrets.HF_TOKEN }}
 
   benchmark-multi:
     name: Run benchmarks multiple
