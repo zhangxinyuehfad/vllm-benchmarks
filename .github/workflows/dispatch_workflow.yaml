@@ -61,6 +61,7 @@ jobs:
           echo "runner=${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}" >> $GITHUB_OUTPUT
           echo "image=${{ github.event.inputs.image || 'ascendai/cann:latest' }}" >> $GITHUB_OUTPUT
           echo "model=${{ github.event.inputs.model || 'Qwen/QwQ-32B' }}" >> $GITHUB_OUTPUT
+          echo "hf_token: ${{ secrets.HF_TOKEN }}"
 
   benchmark-single:
     name: Run benchmarks
