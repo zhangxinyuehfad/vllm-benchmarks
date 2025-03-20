@@ -18,11 +18,7 @@ check_npus() {
 
 ensure_sharegpt_downloaded() {
   local FILE=ShareGPT_V3_unfiltered_cleaned_split.json
-  if [ ! -f "$FILE" ]; then
-    wget https://hf-mirror.com/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/$FILE
-  else
-    echo "$FILE already exists."
-  fi
+  huggingface-cli download --repo-type dataset anon8231489123/ShareGPT_Vicuna_unfiltered $FILE
 }
 
 ensure_model_downloaded() {
