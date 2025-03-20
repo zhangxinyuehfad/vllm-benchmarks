@@ -20,16 +20,14 @@ defaults:
     shell: bash -el {0}
 
 jobs:
-  test:
+  benchmark:
     name: run benchmarks for torch_npu
     runs-on: ${{ inputs.runner }}
-    env: 
-      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     container:
       image: ${{ inputs.image }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
-        HF_TOKEN: $HF_TOKEN
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
       - name: Show NPU info
         run: |
