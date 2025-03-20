@@ -35,6 +35,7 @@ ensure_sharegpt_downloaded() {
     wget https://hf-mirror.com/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/$FILE
   else
     echo "$FILE already exists."
+  fi
 }
 
 ensure_model_downloaded() {
