@@ -49,4 +49,4 @@ jobs:
       - name: Download model
         run: |
           echo $HF_TOKEN
-          huggingface-cli download --resume-download meta-llama/Meta-Llama-3.1-8B-Instruct --token $HF_TOKEN --exclude "*.pth"
+          huggingface-cli download --resume-download meta-llama/Meta-Llama-3.1-8B-Instruct --token ${{ secrets.HF_TOKEN }} --exclude "*.pth"
