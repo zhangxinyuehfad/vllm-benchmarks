@@ -8,6 +8,10 @@ on:
 
   workflow_dispatch:
     inputs:
+      branch:
+        required: true
+        type: string
+        default: 'main'
       runner:
         required: true
         type: choice
