@@ -5,13 +5,12 @@ on:
   #   - cron: '0 12 * * *'
   # repository_dispatch:
   #   types: 
-
+  push:
+    branches:
+      - "*"
+      
   workflow_dispatch:
     inputs:
-      branch:
-        required: true
-        type: string
-        default: 'main'
       runner:
         required: true
         type: choice
