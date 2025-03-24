@@ -138,14 +138,23 @@ jobs:
             exit 78  # "skipped"
           fi
 
-
-
       - name: Run benchmark iteration
         working-directory: ./vllm-ascend
         run: |
-          COMMIT_ID=7330416de3fd2f8c6b9b82fb1ad0adfb9c70d483
-          COMMIT_TITLE=$(git log -1 --pretty=%s 7330416de3fd2f8c6b9b82fb1ad0adfb9c70d483)
-          COMMIT_TIME=$(git show -s --format=%cd $COMMIT_ID --date=iso-strict)
-          COMMIT_TIME_NO_TZ=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
-          cd ../vllm-benchmarks
-          bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$COMMIT_ID" "$COMMIT_TITLE" "$COMMIT_TIME_NO_TZ"
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            commit_id=$(echo "$line" | awk '{print $1}')
+            commit_title=$(echo "$line" | cut -d ' ' -f2-)
+            commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
+            commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
+
+            git checkout $commit_id
+            git log --oneline -n 1
+            pip install -e .
+            echo "commit_id: $commit_id"
+            echo "commit_title: $commit_title"
+            echo "commit_time: $commit_time_no_tz"
+            echo "------------------------"
+            cd ../vllm-benchmarks
+            bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
+            cd -
+          done < filtered_commit_log.txt
