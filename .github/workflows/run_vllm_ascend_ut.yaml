@@ -82,6 +82,11 @@ jobs:
         working-directory: ./vllm-ascend
         run: |
           pip install -e .
+      
+      - name: Install pytest
+        working-directory: ./vllm-ascend
+        run: |
+          pip install -r requirements-dev.txt
 
       - name: Download pta
         run: |
