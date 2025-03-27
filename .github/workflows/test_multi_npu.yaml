@@ -83,6 +83,7 @@ jobs:
           pip install -e .
 
       - name: Download pta
+        working-directory: ./vllm-ascend
         run: |
           bash pta_install.sh
 
