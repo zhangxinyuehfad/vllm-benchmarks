@@ -28,6 +28,16 @@ on:
       - '.github/workflows/vllm_ascend_new_test.yaml'
       - '!docs/**'
       - 'pytest.ini'
+  pull_request:
+    branches:
+      - 'main'
+      - '*-dev'
+    paths:
+      - '*.txt'
+      - '**/*.py'
+      - '.github/workflows/vllm_ascend_new_test.yaml'
+      - '!docs/**'
+      - 'pytest.ini'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -69,7 +79,8 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          repository: vllm-project/vllm-ascend
+          repository: Potabk/vllm-ascend
+          ref: ci
           path: ./
 
       - name: Install dependencies
@@ -138,7 +149,8 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          repository: vllm-project/vllm-ascend
+          repository: Potabk/vllm-ascend
+          ref: ci
           path: ./
 
       - name: Install dependencies
