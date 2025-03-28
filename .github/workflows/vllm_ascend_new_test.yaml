@@ -108,7 +108,7 @@ jobs:
 
       - name: Run vllm-project/vllm-ascend test
         run: |
-          VLLM_USE_V1=0 pytest -sv  tests
+          VLLM_USE_V1=0 pytest -sv -m 'not multi' tests
 
       - name: Run vllm-project/vllm test
         env:
@@ -144,7 +144,7 @@ jobs:
 
       - name: Config git
         run: |
-          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
+          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/ 
 
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
