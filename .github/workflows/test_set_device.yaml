@@ -87,6 +87,10 @@ jobs:
         run: |
           bash pta_install.sh
       
+      - name: Show pip
+        run: |
+          pip list
+
       - name: test
         working-directory: ./vllm-ascend
         run: |
