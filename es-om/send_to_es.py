@@ -12,7 +12,7 @@ parser.add_argument('--commit_title', type=str, required=True)
 parser.add_argument('--commit_time', type=str, required=True)
 
 
-def send_data(data_instance: Dict[str, List[Union[ServingDataEntry, LatencyDataEntry, ThroughputDataEntry, AccuracyDataEntry]]]):
+def send_data(data_instance: Dict[str, List[Union[ServingDataEntry, LatencyDataEntry, ThroughputDataEntry]]]):
     datahandler =  DataHandler()
     for index_name, data_list in data_instance.items():
         datahandler.index_name = index_name
