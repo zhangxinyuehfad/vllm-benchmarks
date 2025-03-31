@@ -1,4 +1,4 @@
 pandas
 datasets
 modelscope
-numpy>=1.23.4,<2.0.0
+numpy<2.0.0

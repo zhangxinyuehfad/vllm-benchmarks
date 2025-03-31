@@ -201,16 +201,6 @@ def data_prc(folder_path: Union[str, Path], commit_id, commit_title, created_at=
                     requests_per_second=data['requests_per_second'],
                     tokens_per_second=data['tokens_per_second'],
                 ))
-            case 'accuracy':
-                res_instance["vllm_benchmark_accuracy"].append(AccuracyDataEntry(
-                    commit_id=commit_id,
-                    commit_title=commit_title,
-                    model_name = data['model_name'],
-                    test_name=test_name,
-                    created_at=created_at,
-                    tp=tp,
-                    gsm8k=data['gsm8k']
-                ))
 
     return res_instance
      
