@@ -3,7 +3,7 @@ name: Workflow B
 
 on:
   workflow_run:
-    workflows: ["test_workflow_call.yaml"]  # 依赖的 workflow 名称
+    workflows: ["workflow_call"]  # 依赖的 workflow 名称
     types:
       - completed
 
