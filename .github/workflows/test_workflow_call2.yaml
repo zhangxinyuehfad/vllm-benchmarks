@@ -1,0 +1,15 @@
+# .github/workflows/workflow-B.yml
+name: Workflow B
+
+on:
+  workflow_run:
+    workflows: ["test_workflow_call.yaml"]  # 依赖的 workflow 名称
+    types:
+      - completed
+
+jobs:
+  run_if_a_success:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Workflow A finished successfully. Running Workflow B..."
