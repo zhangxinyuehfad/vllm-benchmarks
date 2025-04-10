@@ -73,69 +73,51 @@ jobs:
           path: ./vllm-ascend
           fetch-depth: 0
 
-      - name: Install vllm-project/vllm from source
-        run: |
-          VLLM_TARGET_DEVICE=empty pip install -e .
+      # - name: Install vllm-project/vllm from source
+      #   run: |
+      #     VLLM_TARGET_DEVICE=empty pip install -e .
 
-      - name: Install vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
-        run: |
-          pip install -e .
+      # - name: Install vllm-project/vllm-ascend
+      #   working-directory: ./vllm-ascend
+      #   run: |
+      #     pip install -e .
 
-      - name: Install development tools 
-        run: | 
-          apt-get install -y build-essential cmake g++
+      # - name: Download pta
+      #   working-directory: ./vllm-ascend
+      #   run: |
+      #     bash pta_install.sh
 
-      - name: Download pta
-        working-directory: ./vllm-ascend
-        run: |
-          bash pta_install.sh
-
-      - name: Checkout nv-action/vllm-benchmarks repo
+      # - name: Checkout nv-action/vllm-benchmarks repo
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: nv-action/vllm-benchmarks
+      #     path: ./vllm-benchmarks
+      
+      # - name: Install benchmark dependencies
+      #   working-directory: ./vllm-benchmarks
+      #   run: |
+      #     pip install -r requirements.txt
+      
+      - name: Checkout cosdt/elastic-tool
         uses: actions/checkout@v4
         with:
-          repository: nv-action/vllm-benchmarks
-          path: ./vllm-benchmarks
-      
-      - name: Install benchmark dependencies
-        working-directory: ./vllm-benchmarks
+          respository: cosdt/elastic-tool
+          path: ./elastic_tool
+          ref: v0.1.0-dev
+
+      - name: Install elastic_tool
+        working-directory: ./elastic_tool
         run: |
-          pip install -r requirements.txt
+          pip install -e .
       
       - name: Collect pr info from vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
         run: |
+          # Only get the pull request which may influences performance
           git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
           cat commit_log.txt
-          
-          commit_id_cur=$(curl -k -X POST "${{ secrets.ES_OM_DOMAIN }}/vllm_benchmark_throughput/_search" \
-          -H "Content-Type: application/x-ndjson" \
-          -H "Authorization: ${{ secrets.ES_OM_AUTHORIZATION }}" \
-          -d '{
-            "_source": false,
-            "size": 10000,
-            "query": {
-              "match_all": {}
-            },
-            "sort": [
-              {
-                "created_at": {
-                  "order": "desc"
-                }
-              }
-            ]
-          }' | jq -r '.hits.hits[]._id' | cut -d'_' -f1)
-
-          grep -vFf <(echo "$commit_id_cur") commit_log.txt > filtered_commit_log.txt
-
-          if [ -s filtered_commit_log.txt ]; then
-            echo "Filtered commit log is not empty."
-            cat filtered_commit_log.txt
-            exit 0  # 'success'
-          else
-            echo "Filtered commit log is empty!"
-            exit 78  # "skipped"
-          fi
+          # Filter out the commits not saved in the es
+          escli check commit_log.txt
 
       - name: Run benchmark iteration
         working-directory: ./vllm-ascend

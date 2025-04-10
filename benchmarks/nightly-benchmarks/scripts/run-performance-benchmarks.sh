@@ -1,7 +1,8 @@
 #!/bin/bash
-set -e
+
 
 check_npus() {
+  # shellcheck disable=SC2155
   declare -g npu_count=$(npu-smi info -l | grep "Total Count" | awk -F ':' '{print $2}' | tr -d ' ')
   
   if [[ -z "$npu_count" || "$npu_count" -eq 0 ]]; then
@@ -16,34 +17,14 @@ check_npus() {
   echo "NPU type is: $npu_type"
 }
 
-check_hf_token() {
-  # check if HF_TOKEN is available and valid
-  if [[ -z "$HF_TOKEN" ]]; then
-    echo "Error: HF_TOKEN is not set."
-    exit 1
-  elif [[ ! "$HF_TOKEN" =~ ^hf_ ]]; then
-    echo "Error: HF_TOKEN does not start with 'hf_'."
-    exit 1
-  else
-    echo "HF_TOKEN is set and valid."
-  fi
-}
-
 ensure_sharegpt_downloaded() {
   local FILE=ShareGPT_V3_unfiltered_cleaned_split.json
   if [ ! -f "$FILE" ]; then
+    echo "$FILE not found, downloading from hf-mirror ..."
     wget https://hf-mirror.com/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/$FILE
   else
     echo "$FILE already exists."
   fi
-}
-
-ensure_model_downloaded() {
-  local DIR=$LLAMA_3_1_8B_PATH
-  if [ ! -d "$DIR" ]; then
-    exit 1
-  fi
-  echo "$DIR"
 }
 
 json2args() {
@@ -52,18 +33,11 @@ json2args() {
   # input: { "model": "meta-llama/Llama-2-7b-chat-hf", "tensor_parallel_size": 1 }
   # output: --model meta-llama/Llama-2-7b-chat-hf --tensor-parallel-size 1
   local json_string=$1
-  local args=$(
+  local args
+  args=$(
     echo "$json_string" | jq -r '
       to_entries |
-      map(
-        if .key == "model" then
-          "--model " + (env[.value] // .value)
-        elif .key ==  "dataset_path" then
-          "--dataset-path " + (env[.value] // .value)
-        else
-          "--" + (.key | gsub("_"; "-")) + " " + (.value | tostring)
-        end
-      ) |
+      map("--" + (.key | gsub("_"; "-")) + " " + (.value | tostring)) |
       join(" ")
     '
   )
@@ -84,12 +58,10 @@ get_cur_npu_id() {
 }
 
 kill_npu_processes() {
-
   ps -aux
   lsof -t -i:8000 | xargs -r kill -9
   pgrep python3 | xargs -r kill -9
-
-  npu_id=$(get_cur_npu_id)
+  
   sleep 4
   rm -rf ~/.config/vllm
 
@@ -122,7 +94,7 @@ run_latency_tests() {
     latency_params=$(echo "$params" | jq -r '.parameters')
     latency_args=$(json2args "$latency_params")
 
-    latency_command="python3 benchmark_latency.py \
+    latency_command="python3 vllm_benchmarks/benchmark_latency.py \
       --output-json $RESULTS_FOLDER/${test_name}.json \
       $latency_args"
 
@@ -163,7 +135,7 @@ run_throughput_tests() {
     throughput_params=$(echo "$params" | jq -r '.parameters')
     throughput_args=$(json2args "$throughput_params")
 
-    throughput_command="python3 benchmark_throughput.py \
+    throughput_command="python3 vllm_benchmarks/benchmark_throughput.py \
       --output-json $RESULTS_FOLDER/${test_name}.json \
       $throughput_args"
 
@@ -247,7 +219,7 @@ run_serving_tests() {
 
       new_test_name=$test_name"_qps_"$qps
 
-      client_command="python3 benchmark_serving.py \
+      client_command="python3 vllm_benchmarks/benchmark_serving.py \
         --save-result \
         --result-dir $RESULTS_FOLDER \
         --result-filename ${new_test_name}.json \
@@ -266,17 +238,18 @@ run_serving_tests() {
   done
 }
 
-
-send_to_es() { 
-  echo $1
-  echo $2
-  python3 ../es-om/send_to_es.py --commit_id "$1" --commit_title "$2" --commit_time "$3"
+cleanup() {
+  rm -rf ./vllm_benchmarks
 }
 
+get_benchmarks_scripts() {
+  git clone -b main --depth=1 git@github.com:vllm-project/vllm.git && \
+  mv vllm/benchmarks vllm_benchmarks
+  rm -rf ./vllm
+}
+
+
 main() {
-  COMMIT_ID="$1"
-  COMMIT_TITLE="$2"
-  COMMIT_TIME="$3"
 
   START_TIME=$(date +%s)
   check_npus
@@ -287,32 +260,31 @@ main() {
   (which lsof) || (apt-get update && apt-get install -y lsof)
 
   # get the current IP address, required by benchmark_serving.py
+  # shellcheck disable=SC2155
   export VLLM_HOST_IP=$(hostname -I | awk '{print $1}')
   # turn of the reporting of the status of each request, to clean up the terminal output
   export VLLM_LOG_LEVEL="WARNING"
 
   # prepare for benchmarking
   cd benchmarks || exit 1
-  QUICK_BENCHMARK_ROOT=../.elastic/nightly-benchmarks/
+  get_benchmarks_scripts
+  trap cleanup EXIT
+
+  QUICK_BENCHMARK_ROOT=./
 
   declare -g RESULTS_FOLDER=results
   mkdir -p $RESULTS_FOLDER
-  
+
   ensure_sharegpt_downloaded
-  # benchmarking
+  # benchmarks
   run_serving_tests $QUICK_BENCHMARK_ROOT/tests/serving-tests.json
   run_latency_tests $QUICK_BENCHMARK_ROOT/tests/latency-tests.json
   run_throughput_tests $QUICK_BENCHMARK_ROOT/tests/throughput-tests.json
-
-  send_to_es   $COMMIT_ID "$COMMIT_TITLE" "$COMMIT_TIME"
-
-  rm -rf $RESULTS_FOLDER
 
   END_TIME=$(date +%s)
   ELAPSED_TIME=$((END_TIME - START_TIME))
   echo "Total execution time: $ELAPSED_TIME seconds"
 
 }
-
 
 main "$@"
