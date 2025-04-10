@@ -69,34 +69,34 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          repository: vllm-project/vllm-ascend
+          repository: Potabk/vllm-ascend
           path: ./vllm-ascend
           fetch-depth: 0
 
-      # - name: Install vllm-project/vllm from source
-      #   run: |
-      #     VLLM_TARGET_DEVICE=empty pip install -e .
+      - name: Install vllm-project/vllm from source
+        run: |
+          VLLM_TARGET_DEVICE=empty pip install -e .
 
-      # - name: Install vllm-project/vllm-ascend
-      #   working-directory: ./vllm-ascend
-      #   run: |
-      #     pip install -e .
+      - name: Install vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
+        run: |
+          pip install -e .
 
-      # - name: Download pta
-      #   working-directory: ./vllm-ascend
-      #   run: |
-      #     bash pta_install.sh
+      - name: Download pta
+        working-directory: ./vllm-ascend
+        run: |
+          bash pta_install.sh
 
-      # - name: Checkout nv-action/vllm-benchmarks repo
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: nv-action/vllm-benchmarks
-      #     path: ./vllm-benchmarks
+      - name: Checkout nv-action/vllm-benchmarks repo
+        uses: actions/checkout@v4
+        with:
+          repository: nv-action/vllm-benchmarks
+          path: ./vllm-benchmarks
       
-      # - name: Install benchmark dependencies
-      #   working-directory: ./vllm-benchmarks
-      #   run: |
-      #     pip install -r requirements.txt
+      - name: Install benchmark dependencies
+        working-directory: ./vllm-benchmarks
+        run: |
+          pip install -r requirements.txt
       
       - name: Checkout cosdt/elastic-tool
         uses: actions/checkout@v4
@@ -115,7 +115,6 @@ jobs:
         run: |
           # Only get the pull request which may influences performance
           git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
-          cat commit_log.txt
           # Filter out the commits not saved in the es
           escli check commit_log.txt
 
@@ -127,15 +126,14 @@ jobs:
             commit_title=$(echo "$line" | cut -d ' ' -f2-)
             commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
             commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
+            cur_tag=$(git branch --show-current)
 
             git checkout $commit_id
-            git log --oneline -n 1
             pip install -e .
             echo "commit_id: $commit_id"
             echo "commit_title: $commit_title"
             echo "commit_time: $commit_time_no_tz"
+            echo "cur_tag: $cur_tag"
             echo "------------------------"
-            cd ../vllm-benchmarks
-            bash .elastic/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz"
-            cd -
-          done < filtered_commit_log.txt
+            bash benchmark/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
+          done < commit_log.txt
