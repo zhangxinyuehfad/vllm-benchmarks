@@ -135,5 +135,5 @@ jobs:
             echo "commit_time: $commit_time_no_tz"
             echo "cur_tag: $cur_tag"
             echo "------------------------"
-            bash benchmark/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
+            bash benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
           done < commit_log.txt

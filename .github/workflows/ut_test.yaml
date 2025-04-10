@@ -95,3 +95,4 @@ jobs:
           HF_ENDPOINT: https://hf-mirror.com
         run: |
          pytest -sv -m 'multinpu' tests
+         
