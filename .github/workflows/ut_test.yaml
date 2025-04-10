@@ -29,7 +29,7 @@ defaults:
 
 jobs:
   test:
-    name: run benchmarks
+    name: Test weight load
     runs-on: ${{ inputs.runner }}
     container:
       image: ${{ inputs.image }}
@@ -80,6 +80,7 @@ jobs:
       - name: Install vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
         run: |
+          pip install -r requirements-dev.txt
           pip install -e .
 
       - name: Download pta
