@@ -109,7 +109,7 @@ jobs:
         working-directory: ./elastic_tool
         run: |
           pip install -e .
-      
+          
       - name: Collect pr info from vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
         run: |
