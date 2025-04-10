@@ -1,4 +1,4 @@
-name: 'multi_npu_test'
+name: 'test weight load'
 
 on:
   workflow_dispatch:
@@ -95,4 +95,3 @@ jobs:
           HF_ENDPOINT: https://hf-mirror.com
         run: |
          pytest -sv -m 'multinpu' tests
-         
