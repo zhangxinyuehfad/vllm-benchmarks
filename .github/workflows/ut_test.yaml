@@ -88,11 +88,19 @@ jobs:
         run: |
           bash pta_install.sh
 
-      - name: Run vllm-project/vllm-ascend test for V1 Engine
+      - name: Run vllm-project/vllm-ascend test on V0 engine
+        env:
+          VLLM_USE_V1: 0
+          HF_ENDPOINT: https://hf-mirror.com
         working-directory: ./vllm-ascend
+        run: |
+          VLLM_USE_V1=0 pytest -sv -m 'multinpu' tests
+
+      - name: Run vllm-project/vllm-ascend test for V1 Engine
         env:
           VLLM_USE_V1: 1
           VLLM_WORKER_MULTIPROC_METHOD: spawn
           HF_ENDPOINT: https://hf-mirror.com
+        working-directory: ./vllm-ascend
         run: |
-         pytest -sv -m 'multinpu' tests
+          pytest -sv -m 'multinpu' tests
