@@ -137,6 +137,6 @@ jobs:
             echo "------------------------"
             # for now we use current repo script to have a test
             cd ../vllm-benchmarks
-            bash benchmarks/nightly-benchmarks/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
+            bash benchmarks/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
             cd -
           done < commit_log.txt
