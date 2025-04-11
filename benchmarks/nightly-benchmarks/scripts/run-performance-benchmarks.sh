@@ -311,6 +311,7 @@ main() {
 
   send_to_es "$RESULTS_FOLDER" "$COMMIT_ID" "$COMMIT_TITLE" "$COMMIT_TIME" "$TAG"
 
+  rm -rf $RESULTS_FOLDER
   END_TIME=$(date +%s)
   ELAPSED_TIME=$((END_TIME - START_TIME))
   echo "Total execution time: $ELAPSED_TIME seconds"
