@@ -1,4 +1,4 @@
-name: 'multi_npu_test'
+name: 'run benchmarks'
 
 on:
   workflow_dispatch:
@@ -69,7 +69,7 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          repository: Potabk/vllm-ascend
+          repository: vllm-project/vllm-ascend
           path: ./vllm-ascend
           fetch-depth: 0
 
@@ -135,5 +135,8 @@ jobs:
             echo "commit_time: $commit_time_no_tz"
             echo "cur_tag: $cur_tag"
             echo "------------------------"
+            # for now we use current repo script to have a test
+            cd ../vllm-benchmarks
             bash benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
+            cd -
           done < commit_log.txt
