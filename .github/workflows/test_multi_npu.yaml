@@ -122,8 +122,8 @@ jobs:
         working-directory: ./vllm-ascend
         run: |
           while IFS= read -r line || [[ -n "$line" ]]; do
-            commit_id=$(echo "$line" | awk '{print $1}')
-            commit_title=$(echo "$line" | cut -d ' ' -f2-)
+            commit_id=$(awk '{print $1}' <<< "$line")
+            commit_title=$(awk '{$1=""; print substr($0, 2)}' <<< "$line")
             commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
             commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
             cur_tag=$(git branch --show-current)
@@ -137,6 +137,6 @@ jobs:
             echo "------------------------"
             # for now we use current repo script to have a test
             cd ../vllm-benchmarks
-            bash benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
+            bash benchmarks/nightly-benchmarks/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
             cd -
           done < commit_log.txt
