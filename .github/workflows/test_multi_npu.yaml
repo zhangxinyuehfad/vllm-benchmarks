@@ -125,30 +125,8 @@ jobs:
         working-directory: ./vllm-ascend
         run: |
           # Only get the pull request which may influences performance
-          max_retries=3
-          retry_delay=0
-          while [ $attempt -lt $max_retries ]; do
-            set +e
-            git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
-            escli check commit_log.txt --tag $(git branch --show-current)
-            status=$?
-            set -e
-
-            if [ $status -eq 0 ]; then
-            echo "Command succeeded on attempt $((attempt + 1))"
-            break
-            else
-              echo "Command failed on attempt $((attempt + 1))"
-              attempt=$((attempt + 1))
-              if [ $attempt -lt $max_retries ]; then
-                echo "Retrying in $retry_delay seconds..."
-                sleep $retry_delay
-              else
-                echo "Command failed after $max_retries attempts."
-                exit 1
-              fi
-            fi
-          done
+          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
+          escli check commit_log.txt --tag $(git branch --show-current)
 
       - name: Prepare dataset
         working-directory: ./vllm-benchmarks
