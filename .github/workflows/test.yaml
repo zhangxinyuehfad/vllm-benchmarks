@@ -102,4 +102,4 @@ jobs:
           VLLM_USE_V1: 0
           HF_ENDPOINT: https://hf-mirror.com
         run: |
-          pytest -sv tests/multicard/test_offline_inference_distributed::test_multimodal
+          pytest -sv tests/multicard/test_offline_inference_distributed.py::test_multimodal
