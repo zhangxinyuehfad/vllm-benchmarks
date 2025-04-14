@@ -27,7 +27,7 @@ import lm_eval
 import torch
 
 UNIMODAL_MODEL_NAME = ["Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.1-8B-Instruct"]
-UNIMODAL_TASK = ["ceval-valid", "mmlu", "gsm8k"]
+UNIMODAL_TASK = ["ceval-valid"]
 # UNIMODAL_TASK = ["ceval-valid_computer_network", "ceval-valid_accountant"]
 MULTIMODAL_NAME = ["Qwen/Qwen2.5-VL-7B-Instruct"]
 MULTIMODAL_TASK = ["mmmu_val"]
@@ -44,6 +44,7 @@ def run_accuracy_unimodal(queue, model=None, dataset=None):
             fewshot_as_multiturn=True,
             batch_size=1,
             num_fewshot=5,
+            max_batch_size=1,
         )
         print(f"Success: {model} on {dataset}")
         measured_value = results["results"]
