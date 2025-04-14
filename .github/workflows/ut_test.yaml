@@ -1,4 +1,4 @@
-name: 'test weight load'
+name: 'test benchmarks'
 
 on:
   workflow_dispatch:
@@ -47,60 +47,101 @@ jobs:
 
       - name: Config mirrors
         run: |
-          # sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+          apt-get update -y
+          apt install git -y
+          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
+
+      - name: Checkout vllm-project/vllm-ascend repo
+        uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
-          apt-get update -y
-          apt-get -y install git jq wget curl lsof
-
-      - name: Config git
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
+          apt-get -y install `cat packages.txt`
+          apt-get -y install gcc g++ cmake libnuma-dev
 
       - name: Checkout vllm-project/vllm repo
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm
-          path: ./
-          
-      - name: Checkout vllm-project/vllm-ascend repo
-        uses: actions/checkout@v4
-        with:
-          repository: Potabk/vllm-ascend
-          path: ./vllm-ascend
-          fetch-depth: 0
+          path: ./vllm-empty
 
       - name: Install vllm-project/vllm from source
+        working-directory: ./vllm-empty
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
 
+      - name: Install pta
+        run: |
+          if [ ! -d /root/.cache/pta ]; then
+            mkdir -p /root/.cache/pta
+          fi
+
+          if [ ! -f /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ]; then
+            cd /root/.cache/pta
+            rm -rf pytorch_v2.5.1_py310*
+            wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250320.3/pytorch_v2.5.1_py310.tar.gz
+            tar -zxvf pytorch_v2.5.1_py310.tar.gz
+          fi
+
+          pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+
       - name: Install vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
         run: |
           pip install -r requirements-dev.txt
           pip install -e .
 
-      - name: Download pta
-        working-directory: ./vllm-ascend
+      - name: Checkout nv-action/vllm-benchmarks repo
+        uses: actions/checkout@v4
+        with:
+          repository: nv-action/vllm-benchmarks
+          path: ./vllm-benchmarks
+      
+      - name: Install benchmark dependencies
+        working-directory: ./vllm-benchmarks
         run: |
-          bash pta_install.sh
+          pip install -r requirements.txt
+      
+      - name: Checkout cosdt/elastic-tool
+        uses: actions/checkout@v4
+        with:
+          repository: cosdt/elastic-tool
+          path: ./elastic_tool
+          ref: 0.1.0-dev
 
-      - name: Run vllm-project/vllm-ascend test on V0 engine
-        env:
-          VLLM_USE_V1: 0
-          HF_ENDPOINT: https://hf-mirror.com
+      - name: Install elastic_tool
+        working-directory: ./elastic_tool
+        run: |
+          pip install -e .
+          
+      - name: Collect pr info from vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
         run: |
-          VLLM_USE_V1=0 pytest -sv -m 'multinpu' tests
+          # Only get the pull request which may influences performance
+          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
+          # Filter out the commits not saved in the es
+          escli check commit_log.txt --tag $(git branch --show-current)
 
-      - name: Run vllm-project/vllm-ascend test for V1 Engine
-        env:
-          VLLM_USE_V1: 1
-          VLLM_WORKER_MULTIPROC_METHOD: spawn
-          HF_ENDPOINT: https://hf-mirror.com
+      - name: Run benchmark iteration
         working-directory: ./vllm-ascend
         run: |
-          pytest -sv -m 'multinpu' tests
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            commit_id=$(awk '{print $1}' <<< "$line")
+            commit_title=$(awk '{$1=""; print substr($0, 2)}' <<< "$line")
+            commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
+            commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
+            cur_tag=$(git branch --show-current)
+
+            git checkout $commit_id
+            pip install -e .
+            echo "commit_id: $commit_id"
+            echo "commit_title: $commit_title"
+            echo "commit_time: $commit_time_no_tz"
+            echo "cur_tag: $cur_tag"
+            echo "------------------------"
+            # for now we use current repo script to have a test
+            cd ../vllm-benchmarks
+            bash benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
+            cd -
+          done < commit_log.txt

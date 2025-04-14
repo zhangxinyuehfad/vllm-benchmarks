@@ -57,7 +57,6 @@ jobs:
 
       - name: Config git
         run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
 
       - name: Checkout vllm-project/vllm repo
@@ -77,15 +76,25 @@ jobs:
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
 
+      - name: Install pta
+        run: |
+          if [ ! -d /root/.cache/pta ]; then
+            mkdir -p /root/.cache/pta
+          fi
+  
+          if [ ! -f /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ]; then
+            cd /root/.cache/pta
+            rm -rf pytorch_v2.5.1_py310*
+            wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250320.3/pytorch_v2.5.1_py310.tar.gz
+            tar -zxvf pytorch_v2.5.1_py310.tar.gz
+          fi
+  
+          pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+  
       - name: Install vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
         run: |
           pip install -e .
-
-      - name: Download pta
-        working-directory: ./vllm-ascend
-        run: |
-          bash pta_install.sh
 
       - name: Checkout nv-action/vllm-benchmarks repo
         uses: actions/checkout@v4
@@ -130,13 +139,18 @@ jobs:
 
             git checkout $commit_id
             pip install -e .
+            echo "------------------------"
             echo "commit_id: $commit_id"
             echo "commit_title: $commit_title"
             echo "commit_time: $commit_time_no_tz"
             echo "cur_tag: $cur_tag"
             echo "------------------------"
             # for now we use current repo script to have a test
-            cd ../vllm-benchmarks
-            bash benchmarks/nightly-benchmarks/scripts/run-performance-benchmarks.sh "$commit_id" "$commit_title" "$commit_time_no_tz" "$cur_tag"
-            cd -
+            bash benchmarks/scripts/run-performance-benchmarks.sh
+            # send the result to es
+            # escli add --tag $cur_tag \
+             --commit_id $commit_id \
+             --commit_title "$commit_title" \
+             --commit_time "$commit_time_no_tz"
+             --res_folder ./benchmarks/results 
           done < commit_log.txt
