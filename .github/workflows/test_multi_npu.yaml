@@ -129,6 +129,11 @@ jobs:
           # Filter out the commits not saved in the es
           escli check commit_log.txt --tag $(git branch --show-current)
 
+      - name: Prepare dataset
+        working-directory: ./vllm-benchmarks
+        run: |
+          cp /root/.cache/datasets/sharegpt/ShareGPT_V3_unfiltered_cleaned_split.json ./benchmarks
+
       - name: Run benchmark iteration
         working-directory: ./vllm-ascend
         run: |
