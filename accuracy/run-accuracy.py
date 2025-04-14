@@ -137,7 +137,7 @@ def main(args):
             print(result)
             accuracy[args.model].append(result)
     if args.model in MULTIMODAL_NAME:
-        for dataset in UNIMODAL_TASK:
+        for dataset in MULTIMODAL_TASK:
             p = multiprocessing.Process(target=run_accuracy_multimodal, args=(result_queue, args.model, dataset))
             p.start()
             p.join()
