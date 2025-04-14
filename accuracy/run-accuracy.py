@@ -27,19 +27,15 @@ import lm_eval
 import torch
 
 UNIMODAL_MODEL_NAME = ["Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.1-8B-Instruct"]
-UNIMODAL_TASK = ["mmlu", "gsm8k","ceval-valid"]
-# UNIMODAL_TASK = ["ceval-valid_computer_network", "mmlu_abstract_algebra"]
+UNIMODAL_TASK = ["ceval-valid", "mmlu", "gsm8k"]
+# UNIMODAL_TASK = ["ceval-valid_computer_network", "ceval-valid_accountant"]
 MULTIMODAL_NAME = ["Qwen/Qwen2.5-VL-7B-Instruct"]
 MULTIMODAL_TASK = ["mmmu_val"]
-# MULTIMODAL_TASK = ["mmmu_accounting"]
+#MULTIMODAL_TASK = ["mmmu_accounting"]
 
-def run_accuracy_unimodal(queue, more_args=None, model=None, dataset=None):
+def run_accuracy_unimodal(queue, model=None, dataset=None):
     try:
-        accuracy = {}
-        accuracy[model] = []
         model_args = f"pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.9"
-        if more_args is not None:
-            model_args = "{},{}".format(model_args, more_args)
         results = lm_eval.simple_evaluate(
             model="vllm",
             model_args=model_args,
@@ -51,9 +47,7 @@ def run_accuracy_unimodal(queue, more_args=None, model=None, dataset=None):
         )
         print(f"Success: {model} on {dataset}")
         measured_value = results["results"]
-        accuracy[model].append(measured_value)
-        print(accuracy)
-        queue.put(accuracy)
+        queue.put(measured_value)
     except Exception as e:
         print(f"Error in run_accuracy_unimodal: {e}")
         queue.put(e)
@@ -62,13 +56,9 @@ def run_accuracy_unimodal(queue, more_args=None, model=None, dataset=None):
         torch.npu.empty_cache()
         gc.collect()
 
-def run_accuracy_multimodal(queue, more_args=None, model=None, dataset=None):
+def run_accuracy_multimodal(queue, model=None, dataset=None):
     try:
-        accuracy = {}
-        accuracy[model] = []
         model_args = f"pretrained={model},max_model_len=8192,dtype=auto,tensor_parallel_size=2,max_images=2"
-        if more_args is not None:
-            model_args = "{},{}".format(model_args, more_args)
         results = lm_eval.simple_evaluate(
             model="vllm-vlm",
             model_args=model_args,
@@ -79,9 +69,7 @@ def run_accuracy_multimodal(queue, more_args=None, model=None, dataset=None):
         )
         print(f"Success: {model} on {dataset}")
         measured_value = results["results"]
-        accuracy[model].append(measured_value)
-        print(accuracy)
-        queue.put(accuracy)
+        queue.put(measured_value)
     except Exception as e:
         print(f"Error in run_accuracy_multimodal: {e}")
         queue.put(e)
@@ -114,7 +102,10 @@ def generate_md(model_name, tasks_list):
 
             value = stats[metric_key]
             stderr = stats.get(f"{metric}_stderr,{flt}", 0)
-            n_shot = "0"
+            if model_name in UNIMODAL_MODEL_NAME:
+                n_shot = "5"
+            else:
+                n_shot = "0"
             row = (
                 f"| {task_name:<37} | {version:6d} | {flt:<6} | {n_shot:6} | {metric:<6} |↑  | {value:5.4f} |±  | {stderr:5.4f}|"
             )
@@ -134,20 +125,27 @@ def safe_md(args, accuracy):
 
 
 def main(args):
+    accuracy = {}
+    accuracy[args.model] = []
+    result_queue: Queue[float] = multiprocessing.Queue()
     if args.model in UNIMODAL_MODEL_NAME:
-        result_queue: Queue[float] = multiprocessing.Queue()
-        p = multiprocessing.Process(target=run_accuracy_unimodal, args=(result_queue, None, args.model, UNIMODAL_TASK))
-        p.start()
-        p.join()
-        result = result_queue.get()
-        safe_md(args, result)
+        for dataset in UNIMODAL_TASK:
+            p = multiprocessing.Process(target=run_accuracy_unimodal, args=(result_queue, args.model, dataset))
+            p.start()
+            p.join()
+            result = result_queue.get()
+            print(result)
+            accuracy[args.model].append(result)
     if args.model in MULTIMODAL_NAME:
-        result_queue: Queue[float] = multiprocessing.Queue()
-        p = multiprocessing.Process(target=run_accuracy_multimodal, args=(result_queue, None, args.model, MULTIMODAL_TASK))
-        p.start()
-        p.join()
-        result = result_queue.get()
-        safe_md(args, result)
+        for dataset in UNIMODAL_TASK:
+            p = multiprocessing.Process(target=run_accuracy_multimodal, args=(result_queue, args.model, dataset))
+            p.start()
+            p.join()
+            result = result_queue.get()
+            print(result)
+            accuracy[args.model].append(result)
+    print(accuracy)
+    safe_md(args, accuracy)
      
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
