@@ -53,7 +53,7 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update -y
-          apt-get -y install git jq wget curl lsof
+          apt-get -y install git jq wget curl lsof gcc g++ cmake libnuma-dev
 
       - name: Config git
         run: |
@@ -76,7 +76,7 @@ jobs:
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
 
-      - name: Install pta
+      - name: Download pta
         run: |
           if [ ! -d /root/.cache/pta ]; then
             mkdir -p /root/.cache/pta
