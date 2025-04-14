@@ -35,7 +35,7 @@ MULTIMODAL_TASK = ["mmmu_val"]
 
 def run_accuracy_unimodal(queue, model=None, dataset=None):
     try:
-        model_args = f"pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.9"
+        model_args = f"pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.8"
         results = lm_eval.simple_evaluate(
             model="vllm",
             model_args=model_args,
