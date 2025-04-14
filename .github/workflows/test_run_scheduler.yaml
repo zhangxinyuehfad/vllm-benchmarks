@@ -1,8 +1,8 @@
-name: 'run benchmarks'
+name: 'scheduler'
 
 on:
     schedule:
-      - cron: '30 6 * * *' # 每天的 UTC 时间 06:30，对应北京时间 14:30
+      - cron: '30 6 * * *' 
 
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
