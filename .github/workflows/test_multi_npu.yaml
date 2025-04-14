@@ -1,9 +1,6 @@
 name: 'run benchmarks'
 
 on:
-  schedule:
-  - cron: '00 16 * * *'
-
   workflow_dispatch:
     inputs:
       runner:
