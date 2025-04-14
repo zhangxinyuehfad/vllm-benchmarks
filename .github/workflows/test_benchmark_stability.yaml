@@ -1,9 +1,6 @@
-name: 'run benchmarks'
+name: 'test stability'
 
 on:
-  schedule:
-  - cron: '00 16 * * *'
-
   workflow_dispatch:
     inputs:
       runner:
