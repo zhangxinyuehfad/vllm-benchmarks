@@ -2,7 +2,7 @@ name: 'scheduler'
 
 on:
     schedule:
-      - cron: '30 6 * * *' 
+      - cron: '33 14 * * *' 
 
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
