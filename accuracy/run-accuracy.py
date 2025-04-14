@@ -76,6 +76,7 @@ def run_accuracy_multimodal(queue, more_args=None, model=None, dataset=None):
             apply_chat_template=True,
             fewshot_as_multiturn=True,
             batch_size=1,
+            num_fewshot=5,
         )
         print(f"Success: {model} on {dataset}")
         measured_value = results["results"]
