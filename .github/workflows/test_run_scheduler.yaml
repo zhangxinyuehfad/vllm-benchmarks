@@ -1,8 +1,26 @@
 name: 'scheduler'
 
 on:
-   schedule:
-   - cron: '50 6 * * *'
+  schedule:
+  - cron: '00 16 * * *'
+
+  workflow_dispatch:
+    inputs:
+      runner:
+        required: true
+        type: choice
+        options:
+          - linux-arm64-npu-4
+          - linux-arm64-npu-1
+        default: 'linux-arm64-npu-1'
+        description: 'The runner selected to run on'
+      image:
+        required: true
+        type: choice
+        options:
+          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
+        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
+        description: 'The docker image which will be loaded'
 
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
@@ -14,10 +32,10 @@ defaults:
 
 jobs:
   test:
-    name: run benchmarks
-    runs-on: linux-arm64-npu-1
+    name: test scheduler
+    runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}
     container:
-      image: ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
+      image: ${{ github.event.inputs.image || 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10' }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
         # VLLM_USE_MODELSCOPE: true
@@ -38,79 +56,8 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update -y
-          apt-get -y install git jq wget curl lsof gcc g++ cmake libnuma-dev
+          apt-get -y install git jq wget curl
 
-      - name: Config git
-        run: |
-          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
-
-      - name: Checkout vllm-project/vllm repo
-        uses: actions/checkout@v4
-        with:
-          repository: vllm-project/vllm
-          path: ./
-          
-      - name: Checkout vllm-project/vllm-ascend repo
-        uses: actions/checkout@v4
-        with:
-          repository: vllm-project/vllm-ascend
-          path: ./vllm-ascend
-          fetch-depth: 0
-
-      - name: Install vllm-project/vllm from source
-        run: |
-          VLLM_TARGET_DEVICE=empty pip install -e .
-
-      - name: Download pta
-        run: |
-          if [ ! -d /root/.cache/pta ]; then
-            mkdir -p /root/.cache/pta
-          fi
-  
-          if [ ! -f /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ]; then
-            cd /root/.cache/pta
-            rm -rf pytorch_v2.5.1_py310*
-            wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250320.3/pytorch_v2.5.1_py310.tar.gz
-            tar -zxvf pytorch_v2.5.1_py310.tar.gz
-          fi
-  
-          pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-  
-      - name: Install vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
-        run: |
-          pip install -e .
-
-      - name: Checkout nv-action/vllm-benchmarks repo
-        uses: actions/checkout@v4
-        with:
-          repository: nv-action/vllm-benchmarks
-          path: ./vllm-benchmarks
-      
-      - name: Install benchmark dependencies
-        working-directory: ./vllm-benchmarks
-        run: |
-          pip install -r requirements.txt
-      
-      - name: Checkout cosdt/elastic-tool
-        uses: actions/checkout@v4
-        with:
-          repository: cosdt/elastic-tool
-          path: ./elastic_tool
-          ref: 0.1.0-dev
-
-      - name: Install elastic_tool
-        working-directory: ./elastic_tool
-        run: |
-          pip install -e .
-          
-      - name: Collect pr info from vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
-        run: |
-          # Only get the pull request which may influences performance
-          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
-          # Filter out the commits not saved in the es
-          escli check commit_log.txt --tag $(git branch --show-current)
 
       - name: Download dataset
         run: |
@@ -122,7 +69,7 @@ jobs:
             if [ ! -f /root/.cache/datasets/sharegpt/ShareGPT_V3_unfiltered_cleaned_split.json ]; then
                 cd /root/.cache/datasets/sharegpt
                 # rm -rf ShareGPT_V3_unfiltered_cleaned_split.json
-                wget https://hf-mirror.com/datasets/sharegpt/ShareGPT_V3_unfiltered_cleaned_split.json
+                wget https://hf-mirror.com/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/ShareGPT_V3_unfiltered_cleaned_split.json
             fi
       
       - name: Prepare dataset

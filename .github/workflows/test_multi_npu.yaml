@@ -1,6 +1,9 @@
 name: 'run benchmarks'
 
 on:
+  schedule:
+  - cron: '00 16 * * *'
+
   workflow_dispatch:
     inputs:
       runner:
@@ -30,9 +33,9 @@ defaults:
 jobs:
   test:
     name: run benchmarks
-    runs-on: ${{ inputs.runner }}
+    runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}
     container:
-      image: ${{ inputs.image }}
+      image: ${{ github.event.inputs.image || 'ascendai/cann:latest' }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
         # VLLM_USE_MODELSCOPE: true
@@ -152,7 +155,7 @@ jobs:
             escli add --tag $cur_tag \
             --commit_id $commit_id \
             --commit_title "$commit_title" \
-            --created_at "$commit_time_no_tz"
+            --created_at "$commit_time_no_tz" \
             --res_dir ./benchmarks/results 
             rm -rf ./benchmarks/results
             cd -
