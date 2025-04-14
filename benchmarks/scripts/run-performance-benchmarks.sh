@@ -262,22 +262,7 @@ get_benchmarks_scripts() {
   rm -rf ./vllm
 }
 
-send_to_es() {
-  # send the results to elasticsearch
-  if python -c "import escli_tool" &> /dev/null; then
-    echo "escli has been installed"
-    escli add --red_dir "$1" --commit_id "$2" --commit_title "$3" --created_at "$4" --tag "$5"
-  else
-    echo "escli not installed , skipping"
-  fi
-
-}
-
 main() {
-  COMMIT_ID="$1"
-  COMMIT_TITLE="$2"
-  COMMIT_TIME="$3"
-  TAG="$4"
 
   START_TIME=$(date +%s)
   check_npus
@@ -308,8 +293,6 @@ main() {
   run_serving_tests $QUICK_BENCHMARK_ROOT/tests/serving-tests.json
   run_latency_tests $QUICK_BENCHMARK_ROOT/tests/latency-tests.json
   run_throughput_tests $QUICK_BENCHMARK_ROOT/tests/throughput-tests.json
-
-  send_to_es "$RESULTS_FOLDER" "$COMMIT_ID" "$COMMIT_TITLE" "$COMMIT_TIME" "$TAG"
 
   rm -rf $RESULTS_FOLDER
   END_TIME=$(date +%s)

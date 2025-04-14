@@ -149,10 +149,10 @@ jobs:
             cd ../vllm-benchmarks
             bash benchmarks/scripts/run-performance-benchmarks.sh
             # send the result to es
-            # escli add --tag $cur_tag \
-             --commit_id $commit_id \
-             --commit_title "$commit_title" \
-             --created_at "$commit_time_no_tz"
-             --res_folder ./benchmarks/results 
+            escli add --tag $cur_tag \
+            --commit_id $commit_id \
+            --commit_title "$commit_title" \
+            --created_at "$commit_time_no_tz"
+            --res_folder ./benchmarks/results 
             cd -
           done < commit_log.txt
