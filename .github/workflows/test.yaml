@@ -100,6 +100,7 @@ jobs:
         working-directory: ./vllm-ascend
         env:
           VLLM_USE_V1: 0
+          VLLM_WORKER_MULTIPROC_METHOD: spawn
           HF_ENDPOINT: https://hf-mirror.com
         run: |
           pytest -sv tests/multicard/test_offline_inference_distributed.py::test_multimodal
