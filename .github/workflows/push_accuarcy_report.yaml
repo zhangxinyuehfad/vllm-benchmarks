@@ -1,8 +1,5 @@
 name: accuarcy report
 on:
-  workflow_run:
-    workflows: ["accuarcy test"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       branch:
@@ -39,14 +36,14 @@ jobs:
           fetch-depth: 0
 
       - name: Debug List Artifacts
-        run: gh api /repos/${{ github.repository }}/actions/artifacts
+        run: gh api /repos/nv-action/vllm-benchmarks/actions/artifacts
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Query artifact run id for Qwen2.5-VL-7B-Instruct latest artifact
         id: get_Qwen2_5_VL_7B_Instruct_latest_run_id
         run: |
-          ARTIFACT_JSON=$(gh api repos/${{ github.repository }}/actions/artifacts)
+          ARTIFACT_JSON=$(gh api repos/nv-action/vllm-benchmarks/actions/artifacts)
           RUN_ID=$(echo "$ARTIFACT_JSON" | \
             jq -r '[.artifacts[] | select(.name=="Qwen2.5-VL-7B-Instruct-accuracy-reports")] | sort_by(.created_at) | last | .workflow_run.id')
           echo "runid=$RUN_ID" >> $GITHUB_OUTPUT
@@ -56,7 +53,7 @@ jobs:
       - name: Query artifact run id for latest artifact
         id: get_Qwen2_5_7B_Instruct_latest_run_id
         run: |
-          ARTIFACT_JSON=$(gh api repos/${{ github.repository }}/actions/artifacts)
+          ARTIFACT_JSON=$(gh api repos/nv-action/vllm-benchmarks/actions/artifacts)
           RUN_ID=$(echo "$ARTIFACT_JSON" | \
             jq -r '[.artifacts[] | select(.name=="Qwen2.5-7B-Instruct-accuracy-reports")] | sort_by(.created_at) | last | .workflow_run.id')
           echo "runid=$RUN_ID" >> $GITHUB_OUTPUT
@@ -66,7 +63,7 @@ jobs:
       - name: Query artifact run id for Llama-3.1-8B-Instruct latest artifact
         id: get_Llama_3_1_8B_Instruct_latest_run_id
         run: |
-          ARTIFACT_JSON=$(gh api repos/${{ github.repository }}/actions/artifacts)
+          ARTIFACT_JSON=$(gh api repos/nv-action/vllm-benchmarks/actions/artifacts)
           RUN_ID=$(echo "$ARTIFACT_JSON" | \
             jq -r '[.artifacts[] | select(.name=="Llama-3.1-8B-Instruct-accuracy-reports")] | sort_by(.created_at) | last | .workflow_run.id')
           echo "runid=$RUN_ID" >> $GITHUB_OUTPUT
@@ -114,19 +111,16 @@ jobs:
           base: ${{ env.SANITIZED_BRANCH_NAME }}
           branch: auto-pr/accuracy-test
           commit-message: "Update generated markdown report"
-          add-paths: |
-            accuracy/result/*.md
+          add-paths: accuracy/result/*.md
           title: "[DOC]Update accuracy report"
           body: |
             The accuracy results running on Ascend NPU have changed, I'm updating the report.
             Please review the changes.
 
-            - [Workflow run][1]
-            - [Qwen2.5-7B-Instruct accuracy report][2]
-            - [Llama-3.1-8B-Instruct accuracy report][3]
-            - [Qwen2.5-VL-7B-Instruct accuracy report][4]
+            - [Qwen2.5-7B-Instruct accuracy report][1]
+            - [Llama-3.1-8B-Instruct accuracy report][2]
+            - [Qwen2.5-VL-7B-Instruct accuracy report][3]
 
-            [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            [2]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.get_Qwen2_5_7B_Instruct_latest_run_id.outputs.runid }}
-            [3]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.get_Llama_3_1_8B_Instruct_latest_run_id.outputs.runid }}
-            [4]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.get_Qwen2_5_VL_7B_Instruct_latest_run_id.outputs.runid }}
+            [1]: ${{ github.server_url }}/nv-action/vllm-benchmarks/actions/runs/${{ steps.get_Qwen2_5_7B_Instruct_latest_run_id.outputs.runid }}
+            [2]: ${{ github.server_url }}/nv-action/vllm-benchmarks/actions/runs/${{ steps.get_Llama_3_1_8B_Instruct_latest_run_id.outputs.runid }}
+            [3]: ${{ github.server_url }}/nv-action/vllm-benchmarks/actions/runs/${{ steps.get_Qwen2_5_VL_7B_Instruct_latest_run_id.outputs.runid }}
