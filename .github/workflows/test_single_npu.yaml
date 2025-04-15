@@ -69,6 +69,5 @@ jobs:
       
       - name: Download from hf
         run: |
-          huggingface-cli download --resume-download deepseek-ai/DeepSeek-V2-Lite
-          huggingface-cli download --resume-download Qwen/Qwen2.5-VL-3B-Instruct
+          huggingface-cli download --resume-download Qwen/Qwen2.5-1.5B-Instruct
 
