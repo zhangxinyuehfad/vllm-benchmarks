@@ -27,7 +27,7 @@ import torch
 
 UNIMODAL_MODEL_NAME = ["Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.1-8B-Instruct"]
 # UNIMODAL_TASK = ["ceval-valid", "mmlu", "gsm8k"]
-UNIMODAL_TASK = ["ceval-valid_accountant", "mmlu_formal_logic"]
+UNIMODAL_TASK = ["gsm8k"]
 MULTIMODAL_NAME = ["Qwen/Qwen2.5-VL-7B-Instruct"]
 # MULTIMODAL_TASK = ["mmmu_val"]
 MULTIMODAL_TASK = ["mmmu_accounting"]
@@ -42,7 +42,7 @@ def run_accuracy_unimodal(queue, model, dataset):
             tasks=dataset,
             apply_chat_template=True,
             fewshot_as_multiturn=True,
-            batch_size=1,
+            batch_size="auto",
             num_fewshot=5,
         )
         print(f"Success: {model} on {dataset}")
