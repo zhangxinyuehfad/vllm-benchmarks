@@ -1,24 +1,33 @@
-name: 'e2e'
+#
+# Copyright (c) 2025 Huawei Technologies Co., Ltd. All Rights Reserved.
+# This file is a part of the vllm-ascend project.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: 'e2e test'
 
 on:
-  workflow_dispatch:
-    inputs:
-      runner:
-        required: true
-        type: choice
-        options:
-          - linux-arm64-npu-4
-          - linux-arm64-npu-1
-        default: 'linux-arm64-npu-1'
-        description: 'The runner selected to run on'
-      image:
-        required: true
-        type: choice
-        options:
-          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
-        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
-        description: 'The docker image which will be loaded'
-
+  pull_request:
+    branches:
+      - 'main'
+      - '*-dev'
+    paths:
+      - '*.txt'
+      - '**/*.py'
+      - '.github/workflows/vllm_ascend_test.yaml'
+      - '!docs/**'
+      - 'pytest.ini'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -27,18 +36,26 @@ defaults:
   run:
     shell: bash -el {0}
 
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   test:
-    name: run benchmarks
-    runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}
+    strategy:
+      max-parallel: 2
+      matrix:
+        os: [linux-arm64-npu-1, linux-arm64-npu-4]
+        vllm_verison: [main, v0.8.3]
+    concurrency:
+      group: |
+        ${{ matrix.os == 'linux-arm64-npu-4' && 'limit-npu-4' || format('job-{0}-{1}', matrix.os, matrix.vllm_verison) }}
+      cancel-in-progress: false
+
+    name: vLLM Ascend test
+    runs-on: ${{ matrix.os }}
     container:
-      image: ${{ github.event.inputs.image || 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10' }}
-      env:
-        HF_ENDPOINT: https://hf-mirror.com
-        # VLLM_USE_MODELSCOPE: true
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        ES_OM_DOMAIN: ${{ secrets.ES_OM_DOMAIN }}
-        ES_OM_AUTHORIZATION: ${{ secrets.ES_OM_AUTHORIZATION }}
+      image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
     steps:
       - name: Check npu and CANN info
         run: |
@@ -47,60 +64,10 @@ jobs:
 
       - name: Config mirrors
         run: |
+          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-
-      - name: Install system dependencies
-        run: |
           apt-get update -y
-          apt-get -y install git jq wget curl lsof gcc g++ cmake libnuma-dev
-
-      - name: Config git
-        run: |
+          apt install git -y
           git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
+          sleep 100
 
-      - name: Checkout vllm-project/vllm repo
-        uses: actions/checkout@v4
-        with:
-          repository: vllm-project/vllm
-          path: ./
-          
-      - name: Checkout vllm-project/vllm-ascend repo
-        uses: actions/checkout@v4
-        with:
-          repository: Potabk/vllm-ascend
-          path: ./vllm-ascend
-          ref: ci
-
-      - name: Install vllm-project/vllm from source
-        run: |
-          VLLM_TARGET_DEVICE=empty pip install -e .
-
-      - name: Download pta
-        run: |
-          if [ ! -d /root/.cache/pta ]; then
-            mkdir -p /root/.cache/pta
-          fi
-  
-          if [ ! -f /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ]; then
-            cd /root/.cache/pta
-            rm -rf pytorch_v2.5.1_py310*
-            wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250320.3/pytorch_v2.5.1_py310.tar.gz
-            tar -zxvf pytorch_v2.5.1_py310.tar.gz
-          fi
-  
-          pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-  
-      - name: Install vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
-        run: |
-          pip install -r requirements-dev.txt
-          pip install -e .
-
-      - name: Run vllm-project/vllm-ascend test on V0 engine
-        working-directory: ./vllm-ascend
-        env:
-          VLLM_USE_V1: 0
-          VLLM_WORKER_MULTIPROC_METHOD: spawn
-          HF_ENDPOINT: https://hf-mirror.com
-        run: |
-          pytest -sv tests/multicard/test_offline_inference_distributed.py::test_multimodal
