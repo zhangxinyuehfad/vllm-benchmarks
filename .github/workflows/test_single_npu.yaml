@@ -63,7 +63,11 @@ jobs:
           sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
       
+      - name: Install huggingface_cli
+        run: |
+          pip install huggingface-hub
+      
       - name: Download from hf
         run: |
-          rm -rf /root/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct
+          huggingface-cli download --resume-download Qwen/Qwen2.5-1.5B-Instruct
 
