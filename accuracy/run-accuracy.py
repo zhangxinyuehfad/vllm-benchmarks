@@ -27,15 +27,15 @@ import lm_eval
 import torch
 
 UNIMODAL_MODEL_NAME = ["Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.1-8B-Instruct"]
-UNIMODAL_TASK = ["ceval-valid", "mmlu", "gsm8k"]
-# UNIMODAL_TASK = ["ceval-valid_computer_network", "ceval-valid_accountant"]
+# UNIMODAL_TASK = ["ceval-valid", "mmlu", "gsm8k"]
+UNIMODAL_TASK = ["mmlu"]
 MULTIMODAL_NAME = ["Qwen/Qwen2.5-VL-7B-Instruct"]
 MULTIMODAL_TASK = ["mmmu_val"]
 #MULTIMODAL_TASK = ["mmmu_accounting"]
 
 def run_accuracy_unimodal(queue, model=None, dataset=None):
     try:
-        model_args = f"pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.7"
+        model_args = f"pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6"
         results = lm_eval.simple_evaluate(
             model="vllm",
             model_args=model_args,
