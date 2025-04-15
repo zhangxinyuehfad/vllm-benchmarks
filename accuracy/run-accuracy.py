@@ -42,7 +42,7 @@ def run_accuracy_unimodal(queue, model, dataset):
             tasks=dataset,
             apply_chat_template=True,
             fewshot_as_multiturn=True,
-            batch_size="auto",
+            batch_size=2,
             num_fewshot=5,
         )
         print(f"Success: {model} on {dataset}")
