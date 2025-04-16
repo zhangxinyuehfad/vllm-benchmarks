@@ -147,6 +147,7 @@ jobs:
 
             git checkout $commit_id
             pip install -e .
+            pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
             echo "------------------------"
             echo "commit_id: $commit_id"
             echo "commit_title: $commit_title"
