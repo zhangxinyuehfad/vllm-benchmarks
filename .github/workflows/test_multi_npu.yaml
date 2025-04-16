@@ -29,7 +29,7 @@ defaults:
 
 jobs:
   test:
-    name: run benchmarks
+    name: run benchmarks main
     runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}
     container:
       image: ${{ github.event.inputs.image || 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10' }}
