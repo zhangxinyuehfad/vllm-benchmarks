@@ -1,4 +1,21 @@
-name: 'run benchmarks'
+#
+# Copyright (c) 2025 Huawei Technologies Co., Ltd. All Rights Reserved.
+# This file is a part of the vllm-ascend project.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: 'run benchmarks v0.7.3'
 
 on:
   workflow_dispatch:
@@ -29,17 +46,16 @@ defaults:
 
 jobs:
   test:
-    name: run benchmarks main
+    name: run benchmarks v0.7.3
     # strategy:
     #   max-parallel: 2
     #   matrix:
-    #     vllm_ascend_branch: [main, v0.7.3dev]
+    #     vllm_ascend_branch: [main, v0.7.3-dev]
     runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}
     container:
       image: ${{ github.event.inputs.image || 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10' }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
-        # VLLM_USE_MODELSCOPE: true
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
         ES_OM_DOMAIN: ${{ secrets.ES_OM_DOMAIN }}
         ES_OM_AUTHORIZATION: ${{ secrets.ES_OM_AUTHORIZATION }}
@@ -66,13 +82,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm
-          ref: v0.8.3
+          ref: v0.7.3
           path: ./
           
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm-ascend
+          ref: v0.7.3-dev
           path: ./vllm-ascend
           fetch-depth: 0
 
@@ -92,13 +109,6 @@ jobs:
             wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250320.3/pytorch_v2.5.1_py310.tar.gz
             tar -zxvf pytorch_v2.5.1_py310.tar.gz
           fi
-  
-          pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-  
-      - name: Install vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
-        run: |
-          pip install -e .
 
       - name: Checkout nv-action/vllm-benchmarks repo
         uses: actions/checkout@v4
