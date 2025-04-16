@@ -83,8 +83,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm
-          ref: v0.8.3
           path: ./
+          fetch-depth: 0
           
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
@@ -95,6 +95,7 @@ jobs:
 
       - name: Install vllm-project/vllm from source
         run: |
+          git checkout 1b84eff03adc04bdde9b2378a751d862a28326eb
           VLLM_TARGET_DEVICE=empty pip install -e .
 
       - name: Download pta
