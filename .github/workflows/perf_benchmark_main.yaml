@@ -96,7 +96,7 @@ jobs:
 
       - name: Install vllm-project/vllm from source
         run: |
-          git checkout 1b84eff03adc04bdde9b2378a751d862a28326eb
+          git checkout 55acf86bf817cca4baf9ed7a3f6e23be510d0198
           VLLM_TARGET_DEVICE=empty pip install -e .
 
       - name: Download pta
