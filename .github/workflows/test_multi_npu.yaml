@@ -133,12 +133,12 @@ jobs:
       - name: Run benchmark iteration
         working-directory: ./vllm-ascend
         run: |
+          cur_tag=$(git branch --show-current)
           while IFS= read -r line || [[ -n "$line" ]]; do
             commit_id=$(awk '{print $1}' <<< "$line")
             commit_title=$(awk '{$1=""; print substr($0, 2)}' <<< "$line")
             commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
             commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
-            cur_tag=$(git branch --show-current)
 
             git checkout $commit_id
             pip install -e .
