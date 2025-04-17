@@ -86,21 +86,15 @@ jobs:
           repository: vllm-project/vllm
           path: ./
       
-      - name: Patch pr
-        run: |
-          git fetch origin pull/545/head:deepseek-pr
-          git checkout deepseek-pr
-      
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
           repository: Potabk/vllm-ascend
-          ref: deepseek
+          ref: deepseek-pr
           path: ./vllm-ascend
 
       - name: Install vllm-project/vllm from source
         run: |
-          git log
           VLLM_TARGET_DEVICE=empty pip install -e .
 
       - name: Download pta
