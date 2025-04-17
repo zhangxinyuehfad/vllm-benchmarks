@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-name: 'single npu'
+name: 'download and upload models'
 
 on:
   workflow_dispatch:
