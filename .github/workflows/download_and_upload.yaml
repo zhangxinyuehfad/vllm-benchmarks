@@ -68,14 +68,14 @@ jobs:
       
       - name: Download from hf
         run: |
-          mkdir -p tmp
+          model_name=$(basename "${{ inputs.model }}")
+          mkdir -p /root/.cache/tmp/$model_name
           huggingface-cli download --resume-download ${{ inputs.model }} --token $HF_TOKEN \
-           --local-dir ./tmp --local-dir-use-symlinks False
+           --local-dir /root/.cache/tmp/$model_name --local-dir-use-symlinks False
 
       - name: Upload to modelscope
         run: |
           model_name=$(basename "${{ inputs.model }}")
-          cd /root/.cache/tmp/$model_name
           # Upload to modelscope
           modelscope login --token ${MS_TOKEN}
-          modelscope upload Ascend/$model_name ./tmp
+          modelscope upload Ascend/$model_name /root/.cache/tmp/$model_name
