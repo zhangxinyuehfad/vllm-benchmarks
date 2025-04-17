@@ -119,6 +119,7 @@ jobs:
           pip install -e .
 
       - name: Run vllm-project/vllm-ascend test on V0 engine
+        working-directory: ./vllm-ascend
         env:
           VLLM_USE_V1: 0
         run: |
