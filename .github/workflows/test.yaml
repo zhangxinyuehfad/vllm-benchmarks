@@ -123,6 +123,6 @@ jobs:
         env:
           VLLM_USE_V1: 0
         run: |
-            pytest -sv tests/multicards/test_offline_inference_distributed.py
+            pytest -sv tests/multicard/test_offline_inference_distributed.py
 
       
