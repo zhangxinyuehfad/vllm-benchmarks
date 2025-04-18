@@ -44,6 +44,8 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
+      - name: Sleep
+        run: sleep 3600
       - name: Check npu
         run: npu-smi info
       - name: CANN info
