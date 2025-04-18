@@ -57,6 +57,11 @@ jobs:
           sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
           pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
       
+      - name: show token prefix
+        run: |
+            echo "HF_TOKEN2 prefix: ${HF_TOKEN2:0:4}****"
+            echo "HF_TOKEN prefix: ${HF_TOKEN:0:4}****"
+
       - name: Install dependencies
         run: |
           pip install huggingface-hub
