@@ -65,12 +65,13 @@ jobs:
         run: |
           model_name=$(basename "${{ inputs.model }}")
           mkdir -p /root/.cache/tmp/$model_name
+          echo "MODEL_CACHE_DIR=/root/.cache/tmp/$model_name" >> $GITHUB_ENV
           huggingface-cli download --resume-download ${{ inputs.model }} --token $HF_TOKEN \
            --local-dir /root/.cache/tmp/$model_name --local-dir-use-symlinks False
 
-      - name: Upload to modelscope
+      - name: Upload to modelscopes
         run: |
           model_name=$(basename "${{ inputs.model }}")
           # Upload to modelscope
           modelscope login --token ${MS_TOKEN}
-          modelscope upload Ascend/$model_name /root/.cache/tmp/$model_name
+          modelscope upload "vllm-ascend/$model_name" "$MODEL_CACHE_DIR"
