@@ -51,11 +51,6 @@ jobs:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
         MS_TOKEN: ${{ secrets.MS_TOKEN }}
     steps:
-      - name: Check npu and CANN info
-        run: |
-          npu-smi info
-          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
-
       - name: Config mirrors
         run: |
           sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
