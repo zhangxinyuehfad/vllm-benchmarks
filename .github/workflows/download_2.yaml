@@ -71,8 +71,10 @@ jobs:
           model_name=$(basename "${{ inputs.model }}")
           mkdir -p /root/.cache/tmp/$model_name
           echo "MODEL_CACHE_DIR=/root/.cache/tmp/$model_name" >> $GITHUB_ENV
-          huggingface-cli download ${{ inputs.model }} --resume-download  --token $HF_TOKEN \
-           --local-dir /root/.cache/tmp/$model_name --local-dir-use-symlinks False
+          cmd="huggingface-cli download ${{ inputs.model }} --resume-download --token $HF_TOKEN --local-dir /root/.cache/tmp/$model_name --local-dir-use-symlinks False"
+          echo "Running command: $cmd"
+          eval $cmd
+
 
       - name: Upload to modelscopes
         run: |
