@@ -49,6 +49,7 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         # VLLM_USE_MODELSCOPE: true
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        HF_TOKEN2: ${{ secrets.HF_TOKEN2 }}
         MS_TOKEN: ${{ secrets.MS_TOKEN }}
     steps:
       - name: Config mirrors
@@ -66,7 +67,7 @@ jobs:
           model_name=$(basename "${{ inputs.model }}")
           mkdir -p /root/.cache/tmp/$model_name
           echo "MODEL_CACHE_DIR=/root/.cache/tmp/$model_name" >> $GITHUB_ENV
-          huggingface-cli download --resume-download ${{ inputs.model }} --token ${HF_TOKEN} \
+          huggingface-cli download --resume-download ${{ inputs.model }} --token ${HF_TOKEN2} \
            --local-dir /root/.cache/tmp/$model_name --local-dir-use-symlinks False
 
       - name: Upload to modelscopes
