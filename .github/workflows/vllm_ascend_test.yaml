@@ -27,9 +27,6 @@ defaults:
   run:
     shell: bash -el {0}
 
-concurrency:
-  group: pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
 
 jobs:
   test:
