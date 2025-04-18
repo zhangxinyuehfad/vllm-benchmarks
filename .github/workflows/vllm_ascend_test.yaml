@@ -44,27 +44,29 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
-      - name: Check npu and CANN info
-        run: |
-          npu-smi info
-          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
+      - name: Check npu
+        run: npu-smi info
+      - name: CANN info
+        run: cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
 
-      - name: Config mirrors
-        run: |
-          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
-          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-          apt-get update -y
-          apt install git -y
-          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
 
-      - name: Checkout vllm-project/vllm-ascend repo
-        uses: actions/checkout@v4
-        with:
-          repository: vllm-project/vllm-ascend
 
-      - name: Install system dependencies
-        run: |
-          sleep 60
+    #   - name: Config mirrors
+    #     run: |
+    #       sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+    #       pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+    #       apt-get update -y
+    #       apt install git -y
+    #       git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
+
+    #   - name: Checkout vllm-project/vllm-ascend repo
+    #     uses: actions/checkout@v4
+    #     with:
+    #       repository: vllm-project/vllm-ascend
+
+    #   - name: Install system dependencies
+    #     run: |
+    #       sleep 60
 
     #   - name: Checkout vllm-project/vllm repo
     #     uses: actions/checkout@v4
