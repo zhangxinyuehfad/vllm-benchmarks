@@ -44,15 +44,29 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
-      - name: Sleep
-        run: |
-          if [[ "${{ matrix.os }}" == "linux-arm64-npu-4" ]]; then
-            sleep 3600
-          else
-            sleep 36
-          fi
+    #   - name: Sleep
+    #     run: |
+    #       if [[ "${{ matrix.os }}" == "linux-arm64-npu-4" ]]; then
+    #         sleep 3600
+    #       else
+    #         sleep 36
+    #       fi
       - name: Check npu
-        run: npu-smi info
+        run: |
+          count=1  # 初始化尝试次数
+
+          while true; do
+            echo "第 $count 次尝试执行 npu-smi info..."
+              npu-smi info &> /dev/null  # 执行命令并忽略输出（如需查看输出，可去掉 &> /dev/null）
+              if [ $? -eq 0 ]; then  # 检查命令执行状态（0 表示成功）
+                  echo "npu-smi info 执行成功，退出循环。"
+                  break  # 成功则退出循环
+              else
+                  echo "执行失败，继续尝试..."
+                  ((count++))  # 尝试次数加 1
+                  sleep 1  # 等待 1 秒后重试（可根据需要调整间隔）
+              fi
+          done
       - name: CANN info
         run: cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
 
