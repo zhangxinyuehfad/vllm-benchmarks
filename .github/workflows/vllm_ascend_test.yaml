@@ -45,7 +45,7 @@ jobs:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
       - name: Sleep
-        run: bash /check-npu/check.sh
+        run: sleep 3600
         #   if [[ "${{ matrix.os }}" == "linux-arm64-npu-4" ]]; then
         #     sleep 3600
         #   else
