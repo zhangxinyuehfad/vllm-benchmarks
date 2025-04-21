@@ -150,7 +150,7 @@ jobs:
             commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
    
             pip install -e .
-            pip install PTA_WHEEL_PATH
+            pip install $PTA_WHEEL_PATH
             echo "------------------------"
             echo "commit_id: $commit_id"
             echo "commit_title: $commit_title"
