@@ -44,30 +44,15 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
-      - name: Sleep
-        run: sleep 3600
+      - name: check npu
+        run: bash /check-npu/check.sh
         #   if [[ "${{ matrix.os }}" == "linux-arm64-npu-4" ]]; then
         #     sleep 3600
         #   else
         #     sleep 36
         #   fi
-      - name: Check npu
-        run: |
-          cat << 'EOF' > /npu-smi-loop.sh
-          #!/bin/bash
-          count=0
-          while true; do
-              if npu-smi info; then
-                  break
-              fi
-              sleep 1
-              ((count++))
-              echo "waiting $count seconds"
-              
-          done
-          EOF
-          chmod +x /npu-smi-loop.sh
-          /npu-smi-loop.sh
+      - name: npu
+        run: npu-smi info
       - name: CANN info
         run: cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
 
