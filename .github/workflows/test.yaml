@@ -18,14 +18,14 @@
 name: 'e2e test'
 
 on:
-  pull_request:
+  push:
     branches:
       - 'main'
       - '*-dev'
     paths:
       - '*.txt'
       - '**/*.py'
-      - '.github/workflows/vllm_ascend_test.yaml'
+      - '.github/test.yaml'
       - '!docs/**'
       - 'pytest.ini'
 
