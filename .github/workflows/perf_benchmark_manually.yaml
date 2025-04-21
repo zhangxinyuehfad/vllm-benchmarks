@@ -101,26 +101,6 @@ jobs:
           # git checkout 0377b8310b28b9ac5d5b6f62c264bd2c727f0e1b
           VLLM_TARGET_DEVICE=empty pip install -e .
 
-      - name: Download pta
-        run: |
-          if [ ! -d /root/.cache/pta ]; then
-            mkdir -p /root/.cache/pta
-          fi
-  
-          if [ ! -f /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ]; then
-            cd /root/.cache/pta
-            rm -rf pytorch_v2.5.1_py310*
-            wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250320.3/pytorch_v2.5.1_py310.tar.gz
-            tar -zxvf pytorch_v2.5.1_py310.tar.gz
-          fi
-  
-          pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-  
-      - name: Install vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
-        run: |
-          pip install -e .
-
       - name: Checkout nv-action/vllm-benchmarks repo
         uses: actions/checkout@v4
         with:
