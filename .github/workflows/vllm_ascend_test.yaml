@@ -55,14 +55,15 @@ jobs:
         run: |
           cat << 'EOF' > /npu-smi-loop.sh
           #!/bin/bash
-          count=1
+          count=0
           while true; do
               if npu-smi info; then
                   break
               fi
               sleep 1
               ((count++))
-              echo "count: $count"
+              echo "waiting $count seconds"
+              
           done
           EOF
           chmod +x /npu-smi-loop.sh
