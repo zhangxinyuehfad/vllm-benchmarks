@@ -96,7 +96,7 @@ jobs:
 
       - name: Install vllm-project/vllm from source
         run: |
-          commit_id = ${{ github.event.inputs.commit }}
+          commit_id=${{ github.event.inputs.commit }}
           git checkout $commit_id
           # git checkout 0377b8310b28b9ac5d5b6f62c264bd2c727f0e1b
           VLLM_TARGET_DEVICE=empty pip install -e .
