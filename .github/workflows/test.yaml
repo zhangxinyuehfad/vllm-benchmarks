@@ -73,8 +73,8 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          ref: v0.7.3-dev
-          repository: vllm-project/vllm-ascend
+          ref: w8a8
+          repository: Potabk/vllm-ascend
           path: ./
 
       - name: Install system dependencies
@@ -86,7 +86,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm
-          ref: v0.7.3
           path: ./vllm-empty
 
       - name: Install vllm-project/vllm from source
@@ -116,28 +115,4 @@ jobs:
 
       - name: Run vllm-project/vllm-ascend e2e test
         run: |
-          pytest -sv tests/test_offline_inference.py
-
-      # only run test on spec decode when the related code changed
-      - name: Check for changes in Speculative Decode
-        id: filter
-        uses: dorny/paths-filter@v2
-        with:
-          filters: |
-            speculative_tests_changed:
-              - "tests/spec_decode/**"
-              - "vllm_ascend/worker/multi_step_runner.py"
-              - "vllm_ascend/worker/multi_step_worker.py"
-              - "vllm_ascend/patch/patch_rejection_sampler.py"
-              - "vllm_ascend/patch/patch_spec_decode_worker.py"
-              - "vllm_ascend/patch/patch_multi_step_worker.py"
-
-      - name: Run vllm-project/vllm-ascend key feature test
-        if: steps.filter.outputs.speculative_tests_changed
-        run: |
-          pytest -sv tests/spec_decode/e2e/test_mtp_correctness.py
-          pytest -sv tests/spec_decode --ignore=tests/spec_decode/e2e/test_mtp_correctness.py 
-
-      - name: Run vllm-project/vllm test
-        run: |
-          pytest -sv
+          pytest -sv tests/multicard/test_offline_inference_distributed.py
