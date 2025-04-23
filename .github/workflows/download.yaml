@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-name: 'download and upload models'
+name: 'download models'
 
 on:
   workflow_dispatch:
@@ -67,17 +67,7 @@ jobs:
           pip install huggingface-hub
           pip install modelscope
       
-      - name: Download from hf
+      - name: Download from modelscope
         run: |
-          model_name=$(basename "${{ inputs.model }}")
-          mkdir -p /root/.cache/tmp/$model_name
-          echo "MODEL_CACHE_DIR=/root/.cache/tmp/$model_name" >> $GITHUB_ENV
-          huggingface-cli download ${{ inputs.model }} --resume-download  --token ${HF_TOKEN2} \
-           --local-dir /root/.cache/tmp/$model_name --local-dir-use-symlinks False
+          modelscope download --model ${{ inputs.model }}
 
-      - name: Upload to modelscopes
-        run: |
-          model_name=$(basename "${{ inputs.model }}")
-          # Upload to modelscope
-          modelscope login --token ${MS_TOKEN}
-          modelscope upload "vllm-ascend/$model_name" "$MODEL_CACHE_DIR"

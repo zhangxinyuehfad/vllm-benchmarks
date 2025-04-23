@@ -35,10 +35,13 @@ on:
           - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
         default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
         description: 'The docker image which will be loaded'
-      commit:
-        required: true
+      vllm_commit:
+        required: false
         type: string
-        default: 'main'
+        description: 'The commit id which will be checked out and tested'
+      vllm_ascend_commit:
+        required: false
+        type: string
         description: 'The commit id which will be checked out and tested'
 
 
@@ -97,8 +100,10 @@ jobs:
       - name: Install vllm-project/vllm from source
         run: |
           commit_id=${{ github.event.inputs.commit }}
+          if [ -z "$commit_id" ]; then
+            commit_id=$(git rev-parse HEAD)
+          fi
           git checkout $commit_id
-          # git checkout 0377b8310b28b9ac5d5b6f62c264bd2c727f0e1b
           VLLM_TARGET_DEVICE=empty pip install -e .
 
       - name: Checkout nv-action/vllm-benchmarks repo
