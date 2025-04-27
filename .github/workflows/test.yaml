@@ -76,6 +76,10 @@ jobs:
           ref: dpsk-test
           repository: Potabk/vllm-ascend
           path: ./
+      
+      - name: Check code
+        run: |
+          cat .github/workflows/vllm_ascend_test.yaml
 
       - name: Install system dependencies
         run: |
