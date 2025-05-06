@@ -45,10 +45,16 @@ jobs:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
       
-      - name: npu
-        run: npu-smi info
-      - name: CANN info
-        run: cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
+      - name: npu-smi info
+        run: |
+          if [[ "${{ matrix.os }}" == "linux-arm64-npu-1" ]]; then
+            echo "hello"
+          else
+            npu-smi info
+          fi
+    #     run: npu-smi info
+    #   - name: CANN info
+    #     run: cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
 
     #   - name: Config mirrors
     #     run: |
