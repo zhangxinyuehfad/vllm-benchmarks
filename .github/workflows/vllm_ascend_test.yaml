@@ -44,11 +44,7 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
-      - name: sleep
-        run: |
-          if [[ "${{ matrix.os }}" == "linux-arm64-npu-4" ]]; then
-            sleep 3600
-          fi
+      
       - name: npu
         run: npu-smi info
       - name: CANN info
