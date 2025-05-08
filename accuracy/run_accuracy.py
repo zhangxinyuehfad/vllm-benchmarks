@@ -10,7 +10,7 @@ import torch
 
 UNIMODAL_MODEL_NAME = [
     "Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.1-8B-Instruct",
-    "Qwen/Qwen3-8B"
+    "Qwen/Qwen3-8B-Base"
 ]
 # UNIMODAL_TASK = ["ceval-valid", "mmlu", "gsm8k"]
 UNIMODAL_TASK = ["ceval-valid_computer_network"]
@@ -31,7 +31,7 @@ MODEL_RUN_INFO = {
      "lm_eval --model vllm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
      "--apply_chat_template --fewshot_as_multiturn --num_fewshot 5 --batch_size 1"
      ),
-    "Qwen/Qwen3-8B":
+    "Qwen/Qwen3-8B-Base":
     ("export MODEL_AEGS='{model}, max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
      "lm_eval --model vllm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
      "--apply_chat_template --fewshot_as_multiturn --num_fewshot 5 --batch_size 1"

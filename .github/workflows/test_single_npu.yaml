@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       models:
-        description: 'choose model(all/Qwen2.5-7B-Instruct/Llama-3.1-8B-Instruct/Qwen2.5-VL-7B-Instruct/Qwen3-8B)'
+        description: 'choose model(all/Qwen2.5-7B-Instruct/Llama-3.1-8B-Instruct/Qwen2.5-VL-7B-Instruct/Qwen3-8B-Base)'
         required: true
         type: choice
         options:
@@ -20,7 +20,7 @@ on:
           - Qwen/Qwen2.5-7B-Instruct
           - meta-llama/Llama-3.1-8B-Instruct
           - Qwen/Qwen2.5-VL-7B-Instruct
-          - Qwen/Qwen3-8B
+          - Qwen/Qwen3-8B-Base
         default: 'all'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
@@ -37,17 +37,17 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJSON(
-          (github.event.inputs.models == 'all' && '[{"model_name":"Qwen/Qwen2.5-7B-Instruct","output_file":"Qwen2.5-7B-Instruct"},{"model_name":"meta-llama/Llama-3.1-8B-Instruct","output_file":"Llama-3.1-8B-Instruct"},{"model_name":"Qwen/Qwen2.5-VL-7B-Instruct","output_file":"Qwen2.5-VL-7B-Instruct"}, {"model_name":"Qwen/Qwen3-8B","output_file":"Qwen3-8B"}]') ||
+          (github.event.inputs.models == 'all' && '[{"model_name":"Qwen/Qwen2.5-7B-Instruct","output_file":"Qwen2.5-7B-Instruct"},{"model_name":"meta-llama/Llama-3.1-8B-Instruct","output_file":"Llama-3.1-8B-Instruct"},{"model_name":"Qwen/Qwen2.5-VL-7B-Instruct","output_file":"Qwen2.5-VL-7B-Instruct"}, {"model_name":"Qwen/Qwen3-8B-Base","output_file":"Qwen3-8B-Base"}]') ||
           (github.event.inputs.models == 'Qwen/Qwen2.5-7B-Instruct' && '[{"model_name":"Qwen/Qwen2.5-7B-Instruct","output_file":"Qwen2.5-7B-Instruct"}]') ||
           (github.event.inputs.models == 'meta-llama/Llama-3.1-8B-Instruct' && '[{"model_name":"meta-llama/Llama-3.1-8B-Instruct","output_file":"Llama-3.1-8B-Instruct"}]') ||
           (github.event.inputs.models == 'Qwen/Qwen2.5-VL-7B-Instruct' && '[{"model_name":"Qwen/Qwen2.5-VL-7B-Instruct","output_file":"Qwen2.5-VL-7B-Instruct"}]') ||
-          (github.event.inputs.models == 'Qwen/Qwen3-8B' && '[{"model_name":"Qwen/Qwen3-8B","output_file":"Qwen3-8B"}]')
+          (github.event.inputs.models == 'Qwen/Qwen3-8B-Base' && '[{"model_name":"Qwen/Qwen3-8B-Base","output_file":"Qwen3-8B-Base"}]')
          ) }}
       fail-fast: false
 
     container:
-      image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
-      # image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
+      # image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
+      image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
