@@ -51,8 +51,10 @@ jobs:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
         HF_TOKEN2: ${{ secrets.HF_TOKEN2 }}
         MS_TOKEN: ${{ secrets.MS_TOKEN }}
-        HF_HUB_TIMEOUT: 600
+        HF_HUB_ETAG_TIMEOUT: 600
         HF_HUB_DOWNLOAD_TIMEOUT: 600
+        HF_HUB_ENABLE_XET_UPLOAD: 0
+        CURL_CA_BUNDLE: ""
     steps:
       - name: Config mirrors
         run: |
