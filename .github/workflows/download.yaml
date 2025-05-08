@@ -72,5 +72,5 @@ jobs:
       - name: Download from modelscope
         run: |
           # modelscope download --model ${{ inputs.model }}
-          huggingface-cli download --resume-download  ${{ inputs.model }}
+          huggingface-cli download --resume-download  ${{ inputs.model }} --timeout 600
 
