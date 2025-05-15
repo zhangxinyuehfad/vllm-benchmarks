@@ -42,7 +42,7 @@ defaults:
 jobs:
   test:
     name: download models from hf and upload to modelscope
-    runs-on: linux-arm64-npu-1
+    runs-on: linux-arm64-npu-4
     container:
       image: ${{ inputs.image }}
       env:
