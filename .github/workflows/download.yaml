@@ -64,6 +64,7 @@ jobs:
       
       - name: show token prefix
         run: |
+            sleep 1000
             echo "HF_TOKEN2 prefix: ${HF_TOKEN2:0:4}****"
             echo "HF_TOKEN prefix: ${HF_TOKEN:0:4}****"
 
