@@ -28,13 +28,6 @@ on:
           - linux-arm64-npu-1
         default: 'linux-arm64-npu-1'
         description: 'The runner selected to run on'
-      image:
-        required: true
-        type: choice
-        options:
-          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
-        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
-        description: 'The docker image which will be loaded'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -73,7 +66,8 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          repository: vllm-project/vllm-ascend
+          ref: main
+          repository: Potabk/vllm-ascend
           path: ./
 
       - name: Install system dependencies
@@ -99,5 +93,4 @@ jobs:
 
       - name: Run vllm-project/vllm-ascend e2e test
         run: |
-          pytest -sv -k "QwQ" tests/multicard/test_offline_inference_distributed.py
-          pytest -sv -k "DeepSeek" tests/multicard/test_offline_inference_distributed.py
+          pytest tests/multicard/test_offline_inference_distributed.py
