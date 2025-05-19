@@ -52,7 +52,7 @@ jobs:
     name: vLLM Ascend test main
     runs-on: linux-arm64-npu-4
     container:
-      image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
+      image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -70,16 +70,11 @@ jobs:
           apt install git -y
           git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
 
-      - name: Checkout Potabk/vllm-ascend repo
+      - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          ref: dpsk-test
-          repository: Potabk/vllm-ascend
+          repository: vllm-project/vllm-ascend
           path: ./
-      
-      - name: Check code
-        run: |
-          cat .github/workflows/vllm_ascend_test.yaml
 
       - name: Install system dependencies
         run: |
@@ -97,21 +92,6 @@ jobs:
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
 
-      - name: Install pta
-        run: |
-          if [ ! -d /root/.cache/pta ]; then
-            mkdir -p /root/.cache/pta
-          fi
-
-          if [ ! -f /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ]; then
-            cd /root/.cache/pta
-            rm -rf pytorch_v2.5.1_py310*
-            wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250320.3/pytorch_v2.5.1_py310.tar.gz
-            tar -zxvf pytorch_v2.5.1_py310.tar.gz
-          fi
-
-          pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-
       - name: Install vllm-project/vllm-ascend
         run: |
           pip install -r requirements-dev.txt
@@ -119,4 +99,5 @@ jobs:
 
       - name: Run vllm-project/vllm-ascend e2e test
         run: |
-          pytest -sv tests/multicard/test_offline_inference_distributed.py
+          pytest -sv -k "QwQ" tests/multicard/test_offline_inference_distributed.py
+          pytest -sv -k "DeepSeek" tests/multicard/test_offline_inference_distributed.py
