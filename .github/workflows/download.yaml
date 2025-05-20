@@ -77,6 +77,6 @@ jobs:
         run: |
           # modelscope download --model ${{ inputs.model }}
           #huggingface-cli download --resume-download  ${{ inputs.model }}
-          modelscope download --model LLM-Research/Llama-4-Scout-17B-16E-Instruct
+          modelscope download --model LLM-Research/Meta-Llama-3-8B-Instruct
     
 
