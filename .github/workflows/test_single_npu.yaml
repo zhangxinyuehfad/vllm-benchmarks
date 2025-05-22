@@ -46,7 +46,8 @@ jobs:
       fail-fast: false
 
     container:
-      image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
+      image: quay.io/ascend/cann:8.0.0-910b-ubuntu22.04-py3.10
+      # image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -126,7 +127,19 @@ jobs:
         working-directory: ./lm-eval
         run: |
             pip install -e .
-            pip install ray datasets==2.16.0
+            pip install ray datasets==2.16.0 transformers==4.51.3 huggingface-hub==0.30.0
+            # pip install ray
+      
+      - name: Checkout nv-action/vllm-benchmarks repo
+        uses: actions/checkout@v4
+        with:
+          repository: nv-action/vllm-benchmarks
+          path: ./vllm-benchmarks
+      
+      - name: Install benchmark dependencies
+        working-directory: ./vllm-benchmarks
+        run: |
+          pip install -r requirements.txt
           
       - name: Collect version info
         run: |
