@@ -1,3 +1,21 @@
+#
+# Copyright (c) 2025 Huawei Technologies Co., Ltd. All Rights Reserved.
+# Copyright 2023 The vLLM team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# This file is a part of the vllm-ascend project.
+#
+
 import argparse
 import gc
 import json
@@ -8,36 +26,26 @@ from multiprocessing import Queue
 import lm_eval
 import torch
 
-UNIMODAL_MODEL_NAME = [
-    "Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.1-8B-Instruct",
-    "Qwen/Qwen3-8B-Base"
-]
-# UNIMODAL_TASK = ["ceval-valid", "mmlu", "gsm8k"]
-UNIMODAL_TASK = ["ceval-valid_computer_network"]
+UNIMODAL_MODEL_NAME = ["Qwen/Qwen2.5-7B-Instruct", "Qwen/Qwen3-8B"]
+UNIMODAL_TASK = ["ceval-valid", "gsm8k"]
 MULTIMODAL_NAME = ["Qwen/Qwen2.5-VL-7B-Instruct"]
 MULTIMODAL_TASK = ["mmmu_val"]
 
-# batch_size_dict = {"ceval-valid": 1, "mmlu": 1, "gsm8k": "auto", "mmmu_val": 1}
-batch_size_dict = {"ceval-valid_computer_network": 1, "mmlu": 1, "gsm8k": "auto", "mmmu_val": 1}
+batch_size_dict = {"ceval-valid": 1, "mmlu": 1, "gsm8k": "auto", "mmmu_val": 1}
 
 MODEL_RUN_INFO = {
     "Qwen/Qwen2.5-7B-Instruct":
-    ("export MODEL_AEGS='{model}, max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
-     "lm_eval --model vllm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
-     "--apply_chat_template --fewshot_as_multiturn --num_fewshot 5 --batch_size 1"
-     ),
-    "LLM-Research/Meta-Llama-3.1-8B-Instruct":
-    ("export MODEL_AEGS='{model}, max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
+    ("export MODEL_ARGS='pretrained={model}, max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
      "lm_eval --model vllm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
      "--apply_chat_template --fewshot_as_multiturn --num_fewshot 5 --batch_size 1"
      ),
     "Qwen/Qwen3-8B-Base":
-    ("export MODEL_AEGS='{model}, max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
+    ("export MODEL_ARGS='pretrained={model}, max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
      "lm_eval --model vllm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
      "--apply_chat_template --fewshot_as_multiturn --num_fewshot 5 --batch_size 1"
      ),
     "Qwen/Qwen2.5-VL-7B-Instruct":
-    ("export MODEL_AEGS='{model}, max_model_len=8192,dtype=auto,tensor_parallel_size=2,max_images=2'\n"
+    ("export MODEL_ARGS='pretrained={model}, max_model_len=8192,dtype=auto,tensor_parallel_size=4,max_images=2'\n"
      "lm_eval --model vllm-vlm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
      "--apply_chat_template --fewshot_as_multiturn  --batch_size 1"),
 }
@@ -69,7 +77,7 @@ def run_accuracy_unimodal(queue, model, dataset):
 
 def run_accuracy_multimodal(queue, model, dataset):
     try:
-        model_args = f"pretrained={model},max_model_len=8192,dtype=auto,tensor_parallel_size=2,max_images=2,gpu_memory_utilization=0.8"
+        model_args = f"pretrained={model},max_model_len=8192,dtype=auto,tensor_parallel_size=4,max_images=2"
         results = lm_eval.simple_evaluate(
             model="vllm-vlm",
             model_args=model_args,
@@ -94,7 +102,7 @@ def generate_md(model_name, tasks_list, args, datasets):
     run_cmd = MODEL_RUN_INFO[model_name].format(model=model_name,
                                                 datasets=datasets)
     model = model_name.split("/")[1]
-    preamble = f"""# {model} Accuracy Test
+    preamble = f"""# 🎯 {model} Accuracy Test
   <div>
     <strong>vLLM version:</strong> vLLM: {args.vllm_version}, vLLM Ascend: {args.vllm_ascend_version} <br>
   </div>
@@ -212,4 +220,7 @@ if __name__ == "__main__":
     parser.add_argument("--vllm_version", type=str, required=False)
     parser.add_argument("--cann_version", type=str, required=False)
     args = parser.parse_args()
+    # TODO(yikun):
+    # 1. add a exit 1 if accuracy is not as expected
+    # 2. Add ✅, ❌ to markdown if accuracy is not as expected
     main(args)
