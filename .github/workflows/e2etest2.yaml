@@ -15,7 +15,7 @@
 # This file is a part of the vllm-ascend project.
 #
 
-name: 'e2e test'
+name: 'e2e test2'
 
 on:
   workflow_dispatch:
@@ -80,16 +80,6 @@ jobs:
         with:
           repository: vllm-project/vllm
           path: ./vllm-empty
-
-      - name: Install vllm-project/vllm from source
-        working-directory: ./vllm-empty
-        run: |
-          VLLM_TARGET_DEVICE=empty pip install -e .
-
-      - name: Install vllm-project/vllm-ascend
-        run: |
-          pip install -r requirements-dev.txt
-          pip install -e .
 
       - name: Run vllm-project/vllm-ascend e2e test
         run: |
