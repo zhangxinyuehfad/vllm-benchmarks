@@ -66,7 +66,7 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: dev
           repository: Potabk/vllm-ascend
           path: ./
 
@@ -93,4 +93,4 @@ jobs:
 
       - name: Run vllm-project/vllm-ascend e2e test
         run: |
-          pytest tests/multicard/test_offline_inference_distributed.py
+          pytest -sv ./vllm-empty/tests/entrypoints/openai/test_completion_with_prompt_embeds.py
