@@ -75,6 +75,6 @@ jobs:
       - name: Download from modelscope
         run: |
           # modelscope download --model ${{ inputs.model }}
-          modelscope download --resume-download  ${{ inputs.model }}
+          modelscope download  ${{ inputs.model }}
     
 
