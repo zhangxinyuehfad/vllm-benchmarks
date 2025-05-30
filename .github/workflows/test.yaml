@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2025 Huawei Technologies Co., Ltd. All Rights Reserved.
+# This file is a part of the vllm-ascend project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# This file is a part of the vllm-ascend project.
 #
 
-name: 'e2e test'
+name: 'simple test'
 
 on:
+  # schedule:
+  #   - cron: '00 16 * * *'
   workflow_dispatch:
     inputs:
       runner:
@@ -28,6 +30,14 @@ on:
           - linux-arm64-npu-1
         default: 'linux-arm64-npu-1'
         description: 'The runner selected to run on'
+      image:
+        required: true
+        type: choice
+        options:
+          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
+        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
+        description: 'The docker image which will be loaded'
+
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -36,61 +46,29 @@ defaults:
   run:
     shell: bash -el {0}
 
-concurrency:
-  group: pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
   test:
-    name: vLLM Ascend test main
-    runs-on: linux-arm64-npu-1
+    name: run benchmarks main
+    # strategy:
+    #   max-parallel: 2
+    #   matrix:
+    #     vllm_ascend_branch: [main, v0.7.3-dev]
+    runs-on: ${{ github.event.inputs.runner || 'linux-arm64-npu-1' }}
     container:
-      image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
+      image: ${{ github.event.inputs.image || 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10' }}
       env:
         HF_ENDPOINT: https://hf-mirror.com
+        # VLLM_USE_MODELSCOPE: true
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        ES_OM_DOMAIN: ${{ secrets.ES_OM_DOMAIN }}
+        ES_OM_AUTHORIZATION: ${{ secrets.ES_OM_AUTHORIZATION }}
     steps:
-      - name: Check npu and CANN info
+      - name: Check env
         run: |
-          npu-smi info
-          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
+          echo "HF_ENDPOINT: '${HF_ENDPOINT}'"
+          echo "HF_TOKEN: '${HF_TOKEN}'"
+          echo "domain: '${ES_OM_DOMAIN}'"
+          echo "authorization: '${ES_OM_AUTHORIZATION}'"
 
-      - name: Config mirrors
-        run: |
-          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
-          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-          apt-get update -y
-          apt install git -y
-          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
-
-      - name: Checkout vllm-project/vllm-ascend repo
-        uses: actions/checkout@v4
-        with:
-          ref: dev
-          repository: Potabk/vllm-ascend
-          path: ./
-
-      - name: Install system dependencies
-        run: |
-          apt-get -y install `cat packages.txt`
-          apt-get -y install gcc g++ cmake libnuma-dev
-
-      - name: Checkout vllm-project/vllm repo
-        uses: actions/checkout@v4
-        with:
-          repository: vllm-project/vllm
-          path: ./vllm-empty
-
-      - name: Install vllm-project/vllm from source
-        working-directory: ./vllm-empty
-        run: |
-          VLLM_TARGET_DEVICE=empty pip install -e .
-
-      - name: Install vllm-project/vllm-ascend
-        run: |
-          pip install -r requirements-dev.txt
-          pip install -e .
-
-      - name: Run vllm-project/vllm-ascend e2e test
-        run: |
-          pytest -sv ./vllm-empty/tests/entrypoints/openai/test_completion_with_prompt_embeds.py
+          echo "secrets: '${{ secrets.ES_OM_DOMAIN }}' '${{ secrets.ES_OM_AUTHORIZATION }}'"
+          sleep 100
