@@ -99,26 +99,29 @@ jobs:
         run: |
           mkdir -p ./accuracy/accuracy_report
           
-      # 使用矩阵方式下载所有报告
-      - name: Download reports
-        uses: actions/download-artifact@v4
-        with:
-          name: report-${{ matrix.model_basename }}-v${{ matrix.version }}
-          path: ./accuracy/accuracy_report
+      # Download all report artifacts using GitHub CLI
+      - name: Download all reports
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          # Install jq if needed
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+          
+          # Get all artifact names
+          artifacts=$(gh api /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts | jq -r '.artifacts[] | select(.name | startswith("report-")) | .name')
+          
+          for artifact in $artifacts; do
+            echo "Downloading $artifact"
+            gh run download ${{ github.run_id }} -n "$artifact" -D temp_reports
+          done
+          
+          # Move markdown files to target directory
+          find temp_reports -name '*.md' -exec mv {} ./accuracy/accuracy_report \;
+          rm -rf temp_reports
         continue-on-error: true
-        strategy:
-          matrix:
-            include:
-              - model_basename: Qwen2.5-7B-Instruct
-                version: 0
-              - model_basename: Qwen2.5-7B-Instruct
-                version: 1
-              - model_basename: Qwen2.5-VL-7B-Instruct
-                version: 0
-              - model_basename: Qwen3-8B-Base
-                version: 0
-              - model_basename: Qwen3-8B-Base
-                version: 1
 
       - name: Check reports existence
         run: |
