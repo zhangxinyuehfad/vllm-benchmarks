@@ -48,7 +48,6 @@ jobs:
 
       - name: Query artifact run id
         id: get_run_id
-        # 关键修改：添加错误处理，缺失报告不中断流程
         run: |
           ARTIFACT_NAME="${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report"
           echo "Querying artifact: $ARTIFACT_NAME"
@@ -77,6 +76,15 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN  }}
           repository: ${{ github.repository }}
           run-id: ${{ steps.get_run_id.outputs.runid }}
+          
+      # 新增步骤：上传下载的报告作为作业产物
+      - name: Upload reports artifact
+        if: ${{ steps.get_run_id.outputs.runid != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: downloaded-reports
+          path: ./accuracy/accuracy_report
+          retention-days: 1
 
   create_pr:
     runs-on: ubuntu-latest
@@ -86,11 +94,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.vllm-ascend-branch }}
-
-      - name: Copy downloaded reports
-        run: |
-          mkdir -p ./accuracy/accuracy_report
-          cp -r ./accuracy/accuracy_report/* ./accuracy/accuracy_report/ || true
+          
+      # 新增步骤：下载所有报告文件
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          name: downloaded-reports
+          path: ./accuracy/accuracy_report
+          pattern: '*.md'
+          merge: true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
