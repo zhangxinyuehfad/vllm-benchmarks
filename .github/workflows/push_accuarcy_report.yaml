@@ -73,7 +73,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report
-          path: ./docs/source/developer_guide/evaluation/accuracy_report
+          path: ./accuracy/accuracy_report
           github-token: ${{ secrets.GITHUB_TOKEN  }}
           repository: ${{ github.repository }}
           run-id: ${{ steps.get_run_id.outputs.runid }}
@@ -107,10 +107,11 @@ jobs:
             The accuracy results running on Ascend NPU have changed, updating reports for:
             ${{ 
               github.event.inputs.models == 'all' 
-                && 'All models (Qwen2.5-7B, Qwen2.5-VL, Qwen3-8B)' 
+                && 'All models (Qwen2.5-7B-Instruct, Qwen2.5-VL-7B-Instruct, Qwen3-8B-Base)' 
                 || github.event.inputs.models 
             }}
             
             - [Workflow run][1]
             
             [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          path: repo
