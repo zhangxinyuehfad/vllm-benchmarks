@@ -191,7 +191,7 @@ jobs:
 
       - name: Run Accuracy Test for V${{ matrix.vllm_use_version }}
         id: report
-        working-directory: ./benchmarks
+        working-directory: ./accuracy
         env:
           PYTORCH_NPU_ALLOC_CONF: max_split_size_mb:256
           VLLM_USE_V1: ${{ matrix.vllm_use_version }}
@@ -202,9 +202,9 @@ jobs:
           echo "markdown_name=$markdown_name" >> $GITHUB_OUTPUT
           mkdir -p ./accuracy
 
-          python ./scripts/run_accuracy.py \
+          python ./run_accuracy.py \
             --model "${{ matrix.model_name }}" \
-            --output "./accuracy/${markdown_name}.md" \
+            --output "${markdown_name}.md" \
             --vllm_ascend_version "${{ env.GHA_VLLM_ASCEND_VERSION || github.ref }}" \
             --cann_version "${{ env.GHA_CANN_VERSION }}" \
             --torch_npu_version "${{ env.GHA_TORCH_NPU_VERSION }}" \
@@ -214,13 +214,13 @@ jobs:
       - name: Generate step summary
         if: ${{ always() }}
         run: |
-          cat ./benchmarks/accuracy/${{ steps.report.outputs.markdown_name }}.md >> $GITHUB_STEP_SUMMARY
+          cat ./accuracy/${{ steps.report.outputs.markdown_name }}.md >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Report for V${{ matrix.vllm_use_version }}
         uses: actions/upload-artifact@v4
         with:
           name: "${{ env.GHA_VLLM_ASCEND_VERSION }}-${{ steps.report.outputs.markdown_name }}-report"
-          path: ./benchmarks/accuracy/${{ steps.report.outputs.markdown_name }}.md
+          path: ./accuracy/${{ steps.report.outputs.markdown_name }}.md
           if-no-files-found: warn
           retention-days: 90
           overwrite: true
