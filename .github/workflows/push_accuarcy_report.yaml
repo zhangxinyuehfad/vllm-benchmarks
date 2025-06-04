@@ -19,7 +19,6 @@ on:
           - Qwen/Qwen2.5-VL-7B-Instruct
           - Qwen/Qwen3-8B-Base
         default: 'all'
-        multiple: true
 
 jobs:
   download_reports:
@@ -86,7 +85,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ github.event.inputs.vllm-ascend-branch }}
           path: repo
 
       - name: Copy downloaded reports
@@ -98,12 +97,12 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PAT_TOKEN }}
-          base: ${{ github.event.inputs.branch }}
+          base: ${{ github.event.inputs.vllm-ascend-branch }}
           branch: auto-pr/accuracy-test-${{ github.run_id }}
-          commit-message: "Update accuracy reports for ${{ github.event.inputs.branch }}"
+          commit-message: "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           add-paths: |
             docs/source/developer_guide/evaluation/accuracy_report/*.md
-          title: "[Doc] Update accuracy reports for ${{ github.event.inputs.branch }}"
+          title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           body: |
             The accuracy results running on Ascend NPU have changed, updating reports for:
             ${{ 
