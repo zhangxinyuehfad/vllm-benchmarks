@@ -177,6 +177,7 @@ jobs:
             pip show torch | grep "Version:" | awk '{print "GHA_TORCH_VERSION="$2}'
             pip show torch_npu | grep "Version:" | awk '{print "GHA_TORCH_NPU_VERSION="$2}'
             pip show vllm | grep "Version:" | awk '{print "GHA_VLLM_VERSION="$2}' | sed 's/+.*//'
+            echo "GHA_VLLM_ASCEND_VERSION=${{ github.event.inputs.vllm-ascend-version || github.ref }}"
           } >> "$GITHUB_ENV"
       
       - name: Print versions
@@ -185,7 +186,7 @@ jobs:
           echo "Torch NPU: ${{ env.GHA_TORCH_NPU_VERSION }}"
           echo "Torch: ${{ env.GHA_TORCH_VERSION }}"
           echo "vLLM: ${{ env.GHA_VLLM_VERSION }}"
-          echo "vLLM Ascend: ${{ env.GHA_VLLM_ASCEND_VERSION || github.ref }}"
+          echo "vLLM Ascend: ${{ env.GHA_VLLM_ASCEND_VERSION }}"
 
       - name: Run Accuracy Test for V${{ matrix.vllm_use_version }}
         id: report
