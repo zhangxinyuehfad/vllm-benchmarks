@@ -105,16 +105,7 @@ jobs:
           path: ./accuracy/accuracy_report
           merge: true
           if_no_artifact_found: warn
-
-      - name: Check reports existence
-        run: |
-          if [ -z "$(ls -A ./accuracy/accuracy_report/*.md 2>/dev/null)" ]; then
-            echo "::warning::No reports found. Creating placeholder."
-            echo "No accuracy reports available" > ./accuracy/accuracy_report/placeholder.md
-          else
-            echo "Found $(ls ./accuracy/accuracy_report/*.md | wc -l) report files"
-          fi
-
+          
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
