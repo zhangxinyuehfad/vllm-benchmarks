@@ -26,13 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        model: ${{ 
-          fromJSON(
-            (github.event.inputs.models == 'all' && 
-            '["Qwen/Qwen2.5-7B-Instruct","Qwen/Qwen2.5-VL-7B-Instruct","Qwen/Qwen3-8B-Base"]') 
-            || format('["{0}"]', github.event.inputs.models)
-          )
-        }}
+        model: ${{ fromJSON((github.event.inputs.models == 'all' && '["Qwen/Qwen2.5-7B-Instruct","Qwen/Qwen2.5-VL-7B-Instruct","Qwen/Qwen3-8B-Base"]') || format('["{0}"]', github.event.inputs.models)) }}
         version: [0, 1]
       exclude:
         - model: 'Qwen/Qwen2.5-VL-7B-Instruct'
