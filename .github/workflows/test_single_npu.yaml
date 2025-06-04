@@ -100,8 +100,6 @@ jobs:
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        DATASET_SOURCE: ModelScope
-        VLLM_USE_MODELSCOPE: True
         # 1. If version specified (work_dispatch), do specified branch accuracy test
         # 2. If no version (labeled PR), do accuracy test by default ref:
         # The branch, tag or SHA to checkout. When checking out the repository that
