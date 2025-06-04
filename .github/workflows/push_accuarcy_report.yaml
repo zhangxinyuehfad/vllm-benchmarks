@@ -90,8 +90,8 @@ jobs:
 
       - name: Copy downloaded reports
         run: |
-          mkdir -p repo/docs/source/developer_guide/evaluation/accuracy_report
-          cp -r ./docs/source/developer_guide/evaluation/accuracy_report/* repo/docs/source/developer_guide/evaluation/accuracy_report/ || true
+          mkdir -p ./accuracy/accuracy_report
+          cp -r ./accuracy/accuracy_report/* ./accuracy/accuracy_report/ || true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
