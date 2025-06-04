@@ -17,9 +17,8 @@ on:
           - all
           - Qwen/Qwen2.5-7B-Instruct
           - Qwen/Qwen2.5-VL-7B-Instruct
-          - Qwen/Qwen3-8B-Base
+          - Qwen3-8B-Base
         default: 'all'
-        multiple: true
 
 jobs:
   download_reports:
