@@ -86,7 +86,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.vllm-ascend-branch }}
-          path: repo
 
       - name: Copy downloaded reports
         run: |
@@ -101,7 +100,7 @@ jobs:
           branch: auto-pr/accuracy-test-${{ github.run_id }}
           commit-message: "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           add-paths: |
-            docs/source/developer_guide/evaluation/accuracy_report/*.md
+            ./accuracy/accuracy_report/*.md
           title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           body: |
             The accuracy results running on Ascend NPU have changed, updating reports for:
@@ -114,4 +113,3 @@ jobs:
             - [Workflow run][1]
             
             [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          path: repo
