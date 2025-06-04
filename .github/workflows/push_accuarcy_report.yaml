@@ -105,20 +105,20 @@ jobs:
         with:
           name: report-${{ matrix.model_basename }}-v${{ matrix.version }}
           path: ./accuracy/accuracy_report
-      continue-on-error: true
-      strategy:
-        matrix:
-          include:
-            - model_basename: Qwen2_5-7B-Instruct
-              version: 0
-            - model_basename: Qwen2_5-7B-Instruct
-              version: 1
-            - model_basename: Qwen2_5-VL-7B-Instruct
-              version: 0
-            - model_basename: Qwen3-8B-Base
-              version: 0
-            - model_basename: Qwen3-8B-Base
-              version: 1
+        continue-on-error: true
+        strategy:
+          matrix:
+            include:
+              - model_basename: Qwen2.5-7B-Instruct
+                version: 0
+              - model_basename: Qwen2.5-7B-Instruct
+                version: 1
+              - model_basename: Qwen2.5-VL-7B-Instruct
+                version: 0
+              - model_basename: Qwen3-8B-Base
+                version: 0
+              - model_basename: Qwen3-8B-Base
+                version: 1
 
       - name: Check reports existence
         run: |
