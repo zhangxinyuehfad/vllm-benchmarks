@@ -115,7 +115,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           base: ${{ github.event.inputs.vllm-ascend-branch }}
-          branch: auto-pr/accuracy-test-${{ github.run_id }}
+          branch: auto-pr/accuracy-report
           commit-message: "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           add-paths: |
             ./accuracy/accuracy_report/*.md
