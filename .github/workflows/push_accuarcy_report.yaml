@@ -19,6 +19,7 @@ on:
           - Qwen/Qwen2.5-VL-7B-Instruct
           - Qwen/Qwen3-8B-Base
         default: 'all'
+        multiple: true
 
 jobs:
   download_reports:
@@ -66,7 +67,7 @@ jobs:
             echo "runid=$RUN_ID" >> $GITHUB_OUTPUT
           fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Download Artifact
         if: ${{ steps.get_run_id.outputs.runid != '' }}
@@ -74,7 +75,7 @@ jobs:
         with:
           name: ${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report
           path: ./docs/source/developer_guide/evaluation/accuracy_report
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PAT_TOKEN }}
           repository: vllm-project/vllm-ascend
           run-id: ${{ steps.get_run_id.outputs.runid }}
 
@@ -91,13 +92,12 @@ jobs:
       - name: Copy downloaded reports
         run: |
           mkdir -p repo/docs/source/developer_guide/evaluation/accuracy_report
-          # 关键修改：忽略空目录错误
           cp -r ./docs/source/developer_guide/evaluation/accuracy_report/* repo/docs/source/developer_guide/evaluation/accuracy_report/ || true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.PR_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           base: ${{ github.event.inputs.branch }}
           branch: auto-pr/accuracy-test-${{ github.run_id }}
           commit-message: "Update accuracy reports for ${{ github.event.inputs.branch }}"
