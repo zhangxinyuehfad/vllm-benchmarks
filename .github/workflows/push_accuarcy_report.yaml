@@ -17,8 +17,9 @@ on:
           - all
           - Qwen/Qwen2.5-7B-Instruct
           - Qwen/Qwen2.5-VL-7B-Instruct
-          - Qwen3-8B-Base
+          - Qwen/Qwen3-8B-Base
         default: 'all'
+        multiple: true
 
 jobs:
   download_reports:
@@ -74,7 +75,7 @@ jobs:
         with:
           name: ${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report
           path: ./docs/source/developer_guide/evaluation/accuracy_report
-          github-token: ${{ secrets.PAT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN  }}
           repository: vllm-project/vllm-ascend
           run-id: ${{ steps.get_run_id.outputs.runid }}
 
