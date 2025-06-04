@@ -98,7 +98,7 @@ jobs:
         run: mkdir -p ./accuracy/accuracy_report
 
       - name: Download all reports
-        uses: dawidd6/action-download-artifact@v4
+        uses: dawidd6/action-download-artifact@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pattern: 'report-*'
@@ -106,6 +106,10 @@ jobs:
           merge: true
           if_no_artifact_found: warn
           
+      - name: Flatten report directory structure
+        run: |
+          find ./accuracy/accuracy_report -type f -name '*.md' -exec mv {} ./accuracy/accuracy_report/ \;
+          find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
