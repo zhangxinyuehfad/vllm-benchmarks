@@ -19,7 +19,6 @@ on:
           - Qwen/Qwen2.5-VL-7B-Instruct
           - Qwen/Qwen3-8B-Base
         default: 'all'
-        multiple: true
 
 jobs:
   download_reports:
@@ -28,10 +27,10 @@ jobs:
       matrix:
         model: ${{ fromJSON((github.event.inputs.models == 'all' && '["Qwen/Qwen2.5-7B-Instruct","Qwen/Qwen2.5-VL-7B-Instruct","Qwen/Qwen3-8B-Base"]') || format('["{0}"]', github.event.inputs.models)) }}
         version: [0, 1]
-      exclude:
-        - model: 'Qwen/Qwen2.5-VL-7B-Instruct'
-          version: 1
-      fail-fast: false
+        exclude:
+          - model: 'Qwen/Qwen2.5-VL-7B-Instruct'
+            version: 1
+      fail-fast: false     
 
     name: Download ${{ matrix.model }} V${{ matrix.version }}
     steps:
