@@ -26,7 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # 关键修改：支持 "all" 选项
         model: ${{ 
           fromJSON(
             (github.event.inputs.models == 'all' && 
