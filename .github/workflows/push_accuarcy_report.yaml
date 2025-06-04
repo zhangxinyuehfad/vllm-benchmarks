@@ -77,13 +77,13 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ steps.get_run_id.outputs.runid }}
           
-      # 新增步骤：上传下载的报告作为作业产物
+      # 关键修改：为每个矩阵作业创建唯一的产物名称
       - name: Upload reports artifact
         if: ${{ steps.get_run_id.outputs.runid != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: downloaded-reports
-          path: ./accuracy/accuracy_report
+          name: downloaded-reports-${{ steps.get_basename.outputs.model_base_name }}-v${{ matrix.version }}
+          path: ./accuracy/accuracy_report/*.md
           retention-days: 1
 
   create_pr:
@@ -95,11 +95,11 @@ jobs:
         with:
           ref: ${{ github.event.inputs.vllm-ascend-branch }}
           
-      # 新增步骤：下载所有报告文件
+      # 关键修改：下载所有匹配的产物
       - name: Download all reports
         uses: actions/download-artifact@v4
         with:
-          name: downloaded-reports
+          name: downloaded-reports-*
           path: ./accuracy/accuracy_report
           pattern: '*.md'
           merge: true
