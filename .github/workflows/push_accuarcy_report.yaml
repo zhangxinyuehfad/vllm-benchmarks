@@ -75,7 +75,7 @@ jobs:
           name: ${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report
           path: ./docs/source/developer_guide/evaluation/accuracy_report
           github-token: ${{ secrets.GITHUB_TOKEN  }}
-          repository: vllm-project/vllm-ascend
+          repository: ${{ github.repository }}
           run-id: ${{ steps.get_run_id.outputs.runid }}
 
   create_pr:
