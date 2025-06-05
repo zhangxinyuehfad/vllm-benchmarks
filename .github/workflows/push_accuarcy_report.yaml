@@ -119,6 +119,7 @@ jobs:
           
           rm -rf ./accuracy/accuracy_report/*
           mv ./accuracy/merged_reports/* ./accuracy/accuracy_report/
+          find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
           
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
