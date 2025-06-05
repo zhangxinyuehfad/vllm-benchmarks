@@ -49,19 +49,19 @@ jobs:
       - name: Query artifact run id
         id: get_run_id
         run: |
-          ARTIFACT_NAME="${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report"
-          echo "Querying artifact: $ARTIFACT_NAME"
+          ARTIFACT_PATTERN="${{ github.event.inputs.vllm-ascend-branch }}-*${{ steps.get_basename.outputs.model_base_name }}*V${{ matrix.version }}*report"
+          echo "Querying artifacts with pattern: $ARTIFACT_PATTERN"
           
-          ARTIFACT_JSON=$(gh api /repos/${{ github.repository }}/actions/artifacts || echo "{}")
+          ARTIFACT_JSON=$(gh api --paginate /repos/${{ github.repository }}/actions/artifacts || echo "{}")
           RUN_ID=$(echo "$ARTIFACT_JSON" | \
-            jq -r --arg name "$ARTIFACT_NAME" \
-            '[.artifacts[] | select(.name == $name)] | sort_by(.created_at) | last | .workflow_run.id // empty')
+            jq -r --arg pattern "$ARTIFACT_PATTERN" \
+            '[.artifacts[] | select(.name | test($pattern))] | sort_by(.created_at) | last | .workflow_run.id // empty')
           
           if [ -z "$RUN_ID" ]; then
-            echo "::warning::Artifact $ARTIFACT_NAME not found. Skipping download."
+            echo "::warning::No artifact found matching pattern $ARTIFACT_PATTERN. Skipping download."
             echo "runid=" >> $GITHUB_OUTPUT
           else
-            echo "Found artifact with run ID: $RUN_ID"
+            echo "Found matching artifact with run ID: $RUN_ID"
             echo "runid=$RUN_ID" >> $GITHUB_OUTPUT
           fi
         env:
@@ -83,7 +83,7 @@ jobs:
         with:
           name: report-${{ steps.get_basename.outputs.model_base_name }}-v${{ matrix.version }}
           path: ./accuracy/accuracy_report/*.md
-          retention-days: 1
+          retention-days: 90
 
   create_pr:
     runs-on: ubuntu-latest
