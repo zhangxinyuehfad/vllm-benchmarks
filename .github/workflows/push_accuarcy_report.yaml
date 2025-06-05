@@ -101,15 +101,17 @@ jobs:
         uses: dawidd6/action-download-artifact@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          pattern: 'report-*'
+          name: 'report-.*'
+          name_is_regexp: true
+          search_artifacts: true
           path: ./accuracy/accuracy_report
-          merge: true
           if_no_artifact_found: warn
           
       - name: Flatten report directory structure
         run: |
-          find ./accuracy/accuracy_report -type f -name '*.md' -exec mv {} ./accuracy/accuracy_report/ \;
+          find ./accuracy/accuracy_report -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report/ \;
           find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
+          
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
