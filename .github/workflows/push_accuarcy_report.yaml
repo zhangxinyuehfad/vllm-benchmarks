@@ -49,9 +49,11 @@ jobs:
       - name: Query artifact run id
         id: get_run_id
         run: |
-          ARTIFACT_PATTERN="${{ github.event.inputs.vllm-ascend-branch }}-*${{ steps.get_basename.outputs.model_base_name }}*V${{ matrix.version }}*report"
+          # 使用更灵活的命名模式匹配
+          ARTIFACT_PATTERN="${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report"
           echo "Querying artifacts with pattern: $ARTIFACT_PATTERN"
           
+          # 添加分页支持获取所有结果
           ARTIFACT_JSON=$(gh api --paginate /repos/${{ github.repository }}/actions/artifacts || echo "{}")
           RUN_ID=$(echo "$ARTIFACT_JSON" | \
             jq -r --arg pattern "$ARTIFACT_PATTERN" \
@@ -83,7 +85,7 @@ jobs:
         with:
           name: report-${{ steps.get_basename.outputs.model_base_name }}-v${{ matrix.version }}
           path: ./accuracy/accuracy_report/*.md
-          retention-days: 90
+          retention-days: 1
 
   create_pr:
     runs-on: ubuntu-latest
