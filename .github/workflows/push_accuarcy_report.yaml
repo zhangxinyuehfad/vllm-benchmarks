@@ -109,8 +109,16 @@ jobs:
           
       - name: Flatten report directory structure
         run: |
-          find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv {} ./accuracy/accuracy_report/ \;
-          find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
+          mkdir -p ./accuracy/merged_reports
+          
+          find ./accuracy/accuracy_report -name '*.md' | while read file; do
+            dir_name=$(basename $(dirname "$file"))
+            base_name=$(basename "$file")
+            cp "$file" "./accuracy/merged_reports/${dir_name}_${base_name}"
+          done
+          
+          rm -rf ./accuracy/accuracy_report/*
+          mv ./accuracy/merged_reports/* ./accuracy/accuracy_report/
           
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
