@@ -25,7 +25,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        model: ${{ fromJSON((github.event.inputs.models == 'all' && '["Qwen/Qwen2.5-7B-Instruct","Qwen/Qwen2.5-VL-7B-Instruct","Qwen/Qwen3-8B-Base"]') || format('["{0}"]', github.event.inputs.models)) }}
+        model: ${{ fromJSON(
+          (github.event.inputs.models == 'all' &&
+            '["Qwen/Qwen2.5-7B-Instruct","Qwen/Qwen2.5-VL-7B-Instruct","Qwen/Qwen3-8B-Base"]') ||
+          (github.event.inputs.models == 'Qwen/Qwen2.5-7B-Instruct' &&
+            '["Qwen/Qwen2.5-7B-Instruct"]') ||
+          (github.event.inputs.models == 'Qwen/Qwen2.5-VL-7B-Instruct' &&
+            '["Qwen/Qwen2.5-VL-7B-Instruct"]') ||
+          (github.event.inputs.models == 'Qwen/Qwen3-8B-Base' &&
+            '["Qwen/Qwen3-8B-Base"]')
+         ) }}
+        
         version: [0, 1]
         exclude:
           - model: 'Qwen/Qwen2.5-VL-7B-Instruct'
@@ -49,15 +59,14 @@ jobs:
       - name: Query artifact run id
         id: get_run_id
         run: |
-          # 使用更灵活的命名模式匹配
           ARTIFACT_PATTERN="${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report"
           echo "Querying artifacts with pattern: $ARTIFACT_PATTERN"
           
-          # 添加分页支持获取所有结果
           ARTIFACT_JSON=$(gh api --paginate /repos/${{ github.repository }}/actions/artifacts || echo "{}")
+          
           RUN_ID=$(echo "$ARTIFACT_JSON" | \
-            jq -r --arg pattern "$ARTIFACT_PATTERN" \
-            '[.artifacts[] | select(.name | test($pattern))] | sort_by(.created_at) | last | .workflow_run.id // empty')
+            jq -s -r --arg pattern "$ARTIFACT_PATTERN" \
+            '[.[].artifacts[]] | map(select(.name | test($pattern))) | sort_by(.created_at) | last | .workflow_run.id // empty')
           
           if [ -z "$RUN_ID" ]; then
             echo "::warning::No artifact found matching pattern $ARTIFACT_PATTERN. Skipping download."
@@ -74,7 +83,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report
-          path: ./accuracy/accuracy_report
+          path: ./accuracy/accuracy_report_bak
           github-token: ${{ secrets.GITHUB_TOKEN  }}
           repository: ${{ github.repository }}
           run-id: ${{ steps.get_run_id.outputs.runid }}
@@ -84,7 +93,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: report-${{ steps.get_basename.outputs.model_base_name }}-v${{ matrix.version }}
-          path: ./accuracy/accuracy_report/*.md
+          path: ./accuracy/accuracy_report_bak/*.md
           retention-days: 1
 
   create_pr:
@@ -99,21 +108,61 @@ jobs:
       - name: Setup workspace
         run: mkdir -p ./accuracy/accuracy_report
 
-      - name: Download all reports
-        uses: dawidd6/action-download-artifact@v3
+      - name: Download only current run reports
+        uses: actions/download-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          name: 'report-.*'
-          name_is_regexp: true
-          search_artifacts: true
           path: ./accuracy/accuracy_report
-          if_no_artifact_found: warn
-          
-      - name: Flatten report directory structure
+          pattern: report-*
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.run_id }}
+
+      - name: Delete old report
         run: |
-          find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report/ \;
+          find ./accuracy/accuracy_report -maxdepth 1 -type f -name '*.md' ! -name 'index.md' -delete
+          find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report \;
           find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
-          
+
+      - name: Generate step summary
+        if: ${{ always() }}
+        run: |
+          for report in ./accuracy/accuracy_report/*.md; do
+            filename=$(basename "$report")
+            # skip index.md
+            if [ "$filename" = "index.md" ]; then
+              continue
+            fi
+
+            if [ -f "$report" ]; then
+              {
+                echo -e "\n\n---\n"
+                echo "## 📄 Report File: $(basename $report)"
+                cat "$report"
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+      - name: Update accuracy_report/index.md
+        run: |
+          REPORT_DIR="./accuracy/accuracy_report"
+          INDEX_MD="$REPORT_DIR/index.md"
+
+          {
+            echo "# Accuracy Report"
+            echo ""
+            echo "::: {toctree}"
+            echo ":caption: Accuracy Report"
+            echo ":maxdepth: 1"
+            
+            for report in "$REPORT_DIR"/*.md; do
+              filename="$(basename "$report" .md)"
+              if [ "$filename" != "index" ]; then
+                echo "$filename"
+              fi
+            done
+
+            echo ":::"
+          } > "$INDEX_MD"
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
