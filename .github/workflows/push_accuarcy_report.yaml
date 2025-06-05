@@ -110,13 +110,7 @@ jobs:
       - name: Flatten report directory structure
         run: |
           mkdir -p ./accuracy/merged_reports
-          
-          find ./accuracy/accuracy_report -name '*.md' | while read file; do
-            dir_name=$(basename $(dirname "$file"))
-            base_name=$(basename "$file")
-            cp "$file" "./accuracy/merged_reports/${dir_name}_${base_name}"
-          done
-          
+          find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv {} ./accuracy/merged_reports/ \;
           rm -rf ./accuracy/accuracy_report/*
           mv ./accuracy/merged_reports/* ./accuracy/accuracy_report/
           find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
