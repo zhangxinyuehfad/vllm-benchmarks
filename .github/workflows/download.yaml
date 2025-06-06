@@ -74,6 +74,7 @@ jobs:
       
       - name: Download from modelscope
         run: |
+          sleep 1000
           # modelscope download --model ${{ inputs.model }}
           modelscope download  ${{ inputs.model }}
     
