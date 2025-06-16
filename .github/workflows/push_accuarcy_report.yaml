@@ -164,6 +164,10 @@ jobs:
 
             echo ":::"
           } > "$INDEX_MD"
+      - name: Configure Git for DCO
+        run: |
+          git config --global user.name "zhangxinyuehfad"
+          git config --global user.email "starmoon_zhang@163.com"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
