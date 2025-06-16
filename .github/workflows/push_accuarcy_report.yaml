@@ -8,6 +8,8 @@ on:
         type: choice
         options:
           - main
+          - v0.9.0rc2
+          - v0.9.0-dev
           - v0.7.3-dev
       models:  
         description: 'models (choose "all" for all models):'
@@ -47,7 +49,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.vllm-ascend-branch }}
+          ref: main
 
       - name: Get base model name
         id: get_basename
@@ -103,7 +105,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.vllm-ascend-branch }}
+          ref: main
 
       - name: Setup workspace
         run: mkdir -p ./accuracy/accuracy_report
@@ -167,7 +169,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PAT_TOKEN }}
-          base: ${{ github.event.inputs.vllm-ascend-branch }}
+          base: main
           branch: auto-pr/accuracy-report
           commit-message: "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           add-paths: |
@@ -184,3 +186,4 @@ jobs:
             - [Workflow run][1]
             
             [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          signoff: true

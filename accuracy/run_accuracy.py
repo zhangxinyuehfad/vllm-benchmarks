@@ -27,31 +27,40 @@ import lm_eval
 import torch
 
 UNIMODAL_MODEL_NAME = ["Qwen/Qwen2.5-7B-Instruct", "Qwen/Qwen3-8B-Base"]
-UNIMODAL_TASK = ["ceval-valid", "gsm8k"]
+# UNIMODAL_TASK = ["ceval-valid", "gsm8k"]
+UNIMODAL_TASK = ["ceval-valid_computer_network"]
 MULTIMODAL_NAME = ["Qwen/Qwen2.5-VL-7B-Instruct"]
 MULTIMODAL_TASK = ["mmmu_val"]
 
-batch_size_dict = {"ceval-valid": 1, "mmlu": 1, "gsm8k": "auto", "mmmu_val": 1}
+# BATCH_SIZE = {"ceval-valid": 1, "mmlu": 1, "gsm8k": "auto", "mmmu_val": 1}
+BATCH_SIZE = {"ceval-valid": 1, "mmlu": 1, "gsm8k": "auto", "mmmu_val": 1, "ceval-valid_computer_network": "auto"}
 
 MODEL_RUN_INFO = {
     "Qwen/Qwen2.5-7B-Instruct":
-    ("export MODEL_ARGS='pretrained={model}, max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
+    ("export MODEL_ARGS='pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
      "lm_eval --model vllm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
      "--apply_chat_template --fewshot_as_multiturn --num_fewshot 5 --batch_size 1"
      ),
     "Qwen/Qwen3-8B-Base":
-    ("export MODEL_ARGS='pretrained={model}, max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
+    ("export MODEL_ARGS='pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6'\n"
      "lm_eval --model vllm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
      "--apply_chat_template --fewshot_as_multiturn --num_fewshot 5 --batch_size 1"
      ),
     "Qwen/Qwen2.5-VL-7B-Instruct":
-    ("export MODEL_ARGS='pretrained={model}, max_model_len=8192,dtype=auto,tensor_parallel_size=4,max_images=2'\n"
+    ("export MODEL_ARGS='pretrained={model},max_model_len=8192,dtype=auto,tensor_parallel_size=4,max_images=2'\n"
      "lm_eval --model vllm-vlm --modlel_args $MODEL_ARGS --tasks {datasets} \ \n"
      "--apply_chat_template --fewshot_as_multiturn  --batch_size 1"),
 }
+FILTER = {
+    "gsm8k": "exact_match,flexible-extract",
+    "ceval-valid": "acc,none",
+    "mmmu_val": "acc,none",
+    "ceval-valid_computer_network":"acc,none"
+}
+RTOL = 0.03
+ACCURACY_FLAG = ""
 
-
-def run_accuracy_unimodal(queue, model, dataset):
+def run_accuracy_unimodal(queue, model, dataset, accuracy_expected):
     try:
         model_args = f"pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6"
         results = lm_eval.simple_evaluate(
@@ -60,7 +69,7 @@ def run_accuracy_unimodal(queue, model, dataset):
             tasks=dataset,
             apply_chat_template=True,
             fewshot_as_multiturn=True,
-            batch_size=batch_size_dict[dataset],
+            batch_size=BATCH_SIZE[dataset],
             num_fewshot=5,
         )
         print(f"Success: {model} on {dataset}")
@@ -75,7 +84,7 @@ def run_accuracy_unimodal(queue, model, dataset):
         gc.collect()
 
 
-def run_accuracy_multimodal(queue, model, dataset):
+def run_accuracy_multimodal(queue, model, dataset, accuracy_expected):
     try:
         model_args = f"pretrained={model},max_model_len=8192,dtype=auto,tensor_parallel_size=4,max_images=2"
         results = lm_eval.simple_evaluate(
@@ -84,7 +93,7 @@ def run_accuracy_multimodal(queue, model, dataset):
             tasks=dataset,
             apply_chat_template=True,
             fewshot_as_multiturn=True,
-            batch_size=batch_size_dict[dataset],
+            batch_size=BATCH_SIZE[dataset],
         )
         print(f"Success: {model} on {dataset}")
         measured_value = results["results"]
@@ -102,9 +111,24 @@ def generate_md(model_name, tasks_list, args, datasets):
     run_cmd = MODEL_RUN_INFO[model_name].format(model=model_name,
                                                 datasets=datasets)
     model = model_name.split("/")[1]
-    preamble = f"""# 🎯 {model} Accuracy Test
+    preamble = f"""# {ACCURACY_FLAG}🎯 {model}
   <div>
-    <strong>vLLM version:</strong> vLLM: {args.vllm_version}, vLLM Ascend: {args.vllm_ascend_version} <br>
+    <strong>vLLM Version:</strong>
+    vLLM:
+    <a href="{args.vllm_commit_url}"
+       target="_blank" rel="noopener noreferrer">
+       {args.vllm_version}@{args.vllm_commit}
+    </a>
+    ,
+    vLLM Ascend:
+    <a href="{args.vllm_ascend_commit_url}"
+       target="_blank" rel="noopener noreferrer">
+      {args.vllm_ascend_version}@{args.vllm_ascend_commit}
+    </a>
+  <br>
+  </div>
+  <div>
+      <strong>vLLM Engine:</strong> V{args.vllm_use_v1} <br>
   </div>
   <div>
       <strong>Software Environment:</strong> CANN: {args.cann_version}, PyTorch: {args.torch_version}, torch-npu: {args.torch_npu_version} <br>
@@ -157,7 +181,7 @@ def generate_md(model_name, tasks_list, args, datasets):
                    f"| {flt:<6} "
                    f"| {n_shot:6} "
                    f"| {metric:<6} "
-                   f"| ↑ {value:>5.4f} "
+                   f"| {value:>5.4f} "
                    f"| ± {stderr:>5.4f} |")
             if not task_name.startswith("-"):
                 rows.append(row)
@@ -181,36 +205,49 @@ def safe_md(args, accuracy, datasets):
 
 
 def main(args):
+    global ACCURACY_FLAG
     accuracy = {}
     accuracy[args.model] = []
     result_queue: Queue[float] = multiprocessing.Queue()
     if args.model in UNIMODAL_MODEL_NAME:
         datasets = ",".join(UNIMODAL_TASK)
         for dataset in UNIMODAL_TASK:
+            accuracy_expected = accuracy_data[args.vllm_use_v1][args.model][dataset]
             p = multiprocessing.Process(target=run_accuracy_unimodal,
                                         args=(result_queue, args.model,
-                                              dataset))
+                                              dataset, accuracy_expected))
             p.start()
             p.join()
             result = result_queue.get()
             print(result)
+            if accuracy_expected-RTOL < result[dataset][FILTER[dataset]] < accuracy_expected+RTOL:
+                pass
+            else:
+                ACCURACY_FLAG = "❌"
             accuracy[args.model].append(result)
     if args.model in MULTIMODAL_NAME:
         datasets = ",".join(MULTIMODAL_TASK)
         for dataset in MULTIMODAL_TASK:
+            accuracy_expected = accuracy_data[args.vllm_use_v1][args.model][dataset]
             p = multiprocessing.Process(target=run_accuracy_multimodal,
                                         args=(result_queue, args.model,
-                                              dataset))
+                                              dataset, accuracy_expected))
             p.start()
             p.join()
             result = result_queue.get()
             print(result)
+            if accuracy_expected-RTOL < result[dataset][FILTER[dataset]] < accuracy_expected+RTOL:
+                pass
+            else:
+                ACCURACY_FLAG = "❌"
             accuracy[args.model].append(result)
     print(accuracy)
     safe_md(args, accuracy, datasets)
 
 
 if __name__ == "__main__":
+    with open('accuracy.json', 'r', encoding='utf-8') as f:
+        accuracy_data = json.load(f)
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=str, required=True)
     parser.add_argument("--model", type=str, required=True)
@@ -219,8 +256,10 @@ if __name__ == "__main__":
     parser.add_argument("--torch_npu_version", type=str, required=False)
     parser.add_argument("--vllm_version", type=str, required=False)
     parser.add_argument("--cann_version", type=str, required=False)
+    parser.add_argument("--vllm_commit", type=lambda s: s[:7], required=False)
+    parser.add_argument("--vllm_commit_url", type=str, required=False)
+    parser.add_argument("--vllm_ascend_commit", type=lambda s: s[:7], required=False)
+    parser.add_argument("--vllm_ascend_commit_url", type=str, required=False)
+    parser.add_argument("--vllm_use_v1", type=str, required=False)
     args = parser.parse_args()
-    # TODO(yikun):
-    # 1. add a exit 1 if accuracy is not as expected
-    # 2. Add ✅, ❌ to markdown if accuracy is not as expected
     main(args)
