@@ -186,4 +186,4 @@ jobs:
             - [Workflow run][1]
             
             [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          # signoff: true
+          signoff: true
