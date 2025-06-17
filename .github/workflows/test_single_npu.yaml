@@ -70,4 +70,3 @@ jobs:
       - name: Download from hf
         run: |
           huggingface-cli download --resume-download meta-llama/Llama-3.2-3B-Instruct
-
