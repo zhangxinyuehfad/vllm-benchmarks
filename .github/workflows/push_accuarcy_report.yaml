@@ -164,10 +164,6 @@ jobs:
 
             echo ":::"
           } > "$INDEX_MD"
-      - name: Configure Git for DCO
-        run: |
-          git config --global user.name "zhangxinyuehfad"
-          git config --global user.email "starmoon_zhang@163.com"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
@@ -175,7 +171,9 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
           base: main
           branch: auto-pr/accuracy-report
-          commit-message: "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+          commit-message: |
+            "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+            Signed-off-by: vllm-ascend-ci <vllmcibot@gmail.com>
           add-paths: |
             ./accuracy/accuracy_report/*.md
           title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
@@ -191,5 +189,3 @@ jobs:
             
             [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           signoff: true
-          author: "zhangxinyuehfad <starmoon_zhang@163.com>"
-          committer: "zhangxinyuehfad <starmoon_zhang@163.com>"
