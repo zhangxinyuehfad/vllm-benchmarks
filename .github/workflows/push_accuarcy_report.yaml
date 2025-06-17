@@ -191,3 +191,5 @@ jobs:
             
             [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           signoff: true
+          author: "zhangxinyuehfad <starmoon_zhang@163.com>"
+          committer: "zhangxinyuehfad <starmoon_zhang@163.com>"
