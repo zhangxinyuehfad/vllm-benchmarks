@@ -138,38 +138,38 @@ jobs:
       - name: Setup workspace
         run: mkdir -p ./accuracy/accuracy_report
 
-      - name: Download only current run reports
-        uses: actions/download-artifact@v4
-        with:
-          path: ./accuracy/accuracy_report
-          pattern: report-*
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.run_id }}
+  #     - name: Download only current run reports
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: ./accuracy/accuracy_report
+  #         pattern: report-*
+  #         github-token: ${{ secrets.GITHUB_TOKEN }}
+  #         run-id: ${{ github.run_id }}
 
-      - name: Delete old report
-        run: |
-          find ./accuracy/accuracy_report -maxdepth 1 -type f -name '*.md' ! -name 'index.md' -delete
-          find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report \;
-          find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
+  #     - name: Delete old report
+  #       run: |
+  #         find ./accuracy/accuracy_report -maxdepth 1 -type f -name '*.md' ! -name 'index.md' -delete
+  #         find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report \;
+  #         find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
 
-      - name: Generate step summary
-        if: ${{ always() }}
-        run: |
-          for report in ./accuracy/accuracy_report/*.md; do
-            filename=$(basename "$report")
-            # skip index.md
-            if [ "$filename" = "index.md" ]; then
-              continue
-            fi
+  #     - name: Generate step summary
+  #       if: ${{ always() }}
+  #       run: |
+  #         for report in ./accuracy/accuracy_report/*.md; do
+  #           filename=$(basename "$report")
+  #           # skip index.md
+  #           if [ "$filename" = "index.md" ]; then
+  #             continue
+  #           fi
 
-            if [ -f "$report" ]; then
-              {
-                echo -e "\n\n---\n"
-                echo "## 📄 Report File: $(basename $report)"
-                cat "$report"
-              } >> "$GITHUB_STEP_SUMMARY"
-            fi
-          done
+  #           if [ -f "$report" ]; then
+  #             {
+  #               echo -e "\n\n---\n"
+  #               echo "## 📄 Report File: $(basename $report)"
+  #               cat "$report"
+  #             } >> "$GITHUB_STEP_SUMMARY"
+  #           fi
+  #         done
 
       - name: Delete failed reports
         run: |
@@ -188,19 +188,19 @@ jobs:
           REPORT_DIR="./accuracy/accuracy_report"
           INDEX_MD="$REPORT_DIR/index.md"
 
-          {
-            echo "# Accuracy Report"
-            echo ""
-            echo "::: {toctree}"
-            echo ":caption: Accuracy Report"
-            echo ":maxdepth: 1"
+  #         {
+  #           echo "# Accuracy Report"
+  #           echo ""
+  #           echo "::: {toctree}"
+  #           echo ":caption: Accuracy Report"
+  #           echo ":maxdepth: 1"
             
-            for report in "$REPORT_DIR"/*.md; do
-              filename="$(basename "$report" .md)"
-              if [ "$filename" != "index" ]; then
-                echo "$filename"
-              fi
-            done
+  #           for report in "$REPORT_DIR"/*.md; do
+  #             filename="$(basename "$report" .md)"
+  #             if [ "$filename" != "index" ]; then
+  #               echo "$filename"
+  #             fi
+  #           done
 
             echo ":::"
           } > "$INDEX_MD"
