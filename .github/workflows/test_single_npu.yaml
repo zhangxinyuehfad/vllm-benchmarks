@@ -1,73 +1,274 @@
-#
-# Copyright (c) 2025 Huawei Technologies Co., Ltd. All Rights Reserved.
-# This file is a part of the vllm-ascend project.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
-name: 'single npu'
-
+name: Accuracy Report
 on:
   workflow_dispatch:
     inputs:
-      runner:
+      vllm-ascend-branch:
+        description: 'vllm-ascend branch:'
         required: true
         type: choice
         options:
-          - linux-arm64-npu-1
-        default: 'linux-arm64-npu-1'
-        description: 'The runner selected to run on'
-      image:
+          - main
+          - v0.9.0rc2
+          - v0.9.0-dev
+          - v0.7.3-dev
+      models:  
+        description: 'models (choose "all" for all models):'
         required: true
         type: choice
         options:
-          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
-        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
-        description: 'The docker image which will be loaded'
-
-# Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
-# declared as "shell: bash -el {0}" on steps that need to be properly activated.
-# It's used to activate ascend-toolkit environment variables.
-defaults:
-  run:
-    shell: bash -el {0}
+          - all
+          - Qwen/Qwen2.5-7B-Instruct
+          - Qwen/Qwen2.5-VL-7B-Instruct
+          - Qwen/Qwen3-8B-Base
+        default: 'all'
 
 jobs:
-  test:
-    name: download models
-    runs-on: ${{ inputs.runner }}
-    container:
-      image: ${{ inputs.image }}
-      env:
-        HF_ENDPOINT: https://hf-mirror.com
-        # VLLM_USE_MODELSCOPE: true
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
-    steps:
-      - name: Check npu and CANN info
-        run: |
-          npu-smi info
-          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
+  download_reports:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        model: ${{ fromJSON(
+          (github.event.inputs.models == 'all' &&
+            '["Qwen/Qwen2.5-7B-Instruct","Qwen/Qwen2.5-VL-7B-Instruct","Qwen/Qwen3-8B-Base"]') ||
+          (github.event.inputs.models == 'Qwen/Qwen2.5-7B-Instruct' &&
+            '["Qwen/Qwen2.5-7B-Instruct"]') ||
+          (github.event.inputs.models == 'Qwen/Qwen2.5-VL-7B-Instruct' &&
+            '["Qwen/Qwen2.5-VL-7B-Instruct"]') ||
+          (github.event.inputs.models == 'Qwen/Qwen3-8B-Base' &&
+            '["Qwen/Qwen3-8B-Base"]')
+         ) }}
+        
+        version: [0, 1]
+        exclude:
+          - model: 'Qwen/Qwen2.5-VL-7B-Instruct'
+            version: 1
+      fail-fast: false     
 
-      - name: Config mirrors
-        run: |
-          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
-          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-      
-      - name: Install huggingface_cli
-        run: |
-          pip install huggingface-hub
-      
-      - name: Download from hf
-        run: |
-          huggingface-cli download --resume-download meta-llama/Llama-3.2-3B-Instruct
+    # name: Download ${{ matrix.model }} V${{ matrix.version }}
+    # steps:
+    #   - name: Checkout repository
+    #     uses: actions/checkout@v4
+    #     with:
+    #       ref: main
 
+    #   - name: Get base model name
+    #     id: get_basename
+    #     run: |
+    #       model_base_name=$(basename "${{ matrix.model }}")
+    #       echo "model_base_name=$model_base_name" >> $GITHUB_OUTPUT
+    #     shell: bash
+
+    #   - name: Query artifact run id
+    #     id: get_run_id
+    #     run: |
+    #       ARTIFACT_PATTERN="${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report"
+    #       echo "Querying artifacts with pattern: $ARTIFACT_PATTERN"
+          
+    #       ARTIFACT_JSON=$(gh api --paginate /repos/${{ github.repository }}/actions/artifacts || echo "{}")
+          
+    #       RUN_ID=$(echo "$ARTIFACT_JSON" | \
+    #         jq -s -r --arg pattern "$ARTIFACT_PATTERN" \
+    #         '[.[].artifacts[]] | map(select(.name | test($pattern))) | sort_by(.created_at) | last | .workflow_run.id // empty')
+          
+    #       if [ -z "$RUN_ID" ]; then
+    #         echo "::warning::No artifact found matching pattern $ARTIFACT_PATTERN. Skipping download."
+    #         echo "runid=" >> $GITHUB_OUTPUT
+    #       else
+    #         echo "Found matching artifact with run ID: $RUN_ID"
+    #         echo "runid=$RUN_ID" >> $GITHUB_OUTPUT
+    #       fi
+    #     env:
+    #       GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+    #   - name: Download Artifact
+    #     if: ${{ steps.get_run_id.outputs.runid != '' }}
+    #     uses: actions/download-artifact@v4
+    #     with:
+    #       name: ${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report
+    #       path: ./accuracy/accuracy_report_bak
+    #       github-token: ${{ secrets.GITHUB_TOKEN  }}
+    #       repository: ${{ github.repository }}
+    #       run-id: ${{ steps.get_run_id.outputs.runid }}
+          
+    #   - name: Upload reports artifact
+    #     if: ${{ steps.get_run_id.outputs.runid != '' }}
+    #     uses: actions/upload-artifact@v4
+    #     with:
+    #       name: report-${{ steps.get_basename.outputs.model_base_name }}-v${{ matrix.version }}
+    #       path: ./accuracy/accuracy_report_bak/*.md
+    #       retention-days: 1
+    name: Download ${{ matrix.model }} V${{ matrix.version }}
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+    with:
+      ref: main
+
+  - name: Get base model name
+    id: get_basename
+    run: |
+      model_base_name=$(basename "${{ matrix.model }}")
+      echo "model_base_name=$model_base_name" >> $GITHUB_OUTPUT
+    shell: bash
+
+  - name: Query artifact run id
+    id: get_run_id
+    run: |
+      # 1. 定义上游仓库名称
+      UPSTREAM_REPO="nv-action/vllm-benchmarks"  # 替换为实际的上游仓库名称
+      
+      ARTIFACT_PATTERN="${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report"
+      echo "Querying artifacts with pattern: $ARTIFACT_PATTERN"
+      
+      # 2. 修改为查询上游仓库的artifacts
+      ARTIFACT_JSON=$(gh api --paginate /repos/$UPSTREAM_REPO/actions/artifacts || echo "{}")
+      
+      RUN_ID=$(echo "$ARTIFACT_JSON" | \
+        jq -s -r --arg pattern "$ARTIFACT_PATTERN" \
+        '[.[].artifacts[]] | map(select(.name | test($pattern))) | sort_by(.created_at) | last | .workflow_run.id // empty')
+      
+      if [ -z "$RUN_ID" ]; then
+        echo "::warning::No artifact found matching pattern $ARTIFACT_PATTERN. Skipping download."
+        echo "runid=" >> $GITHUB_OUTPUT
+      else
+        echo "Found matching artifact with run ID: $RUN_ID"
+        echo "runid=$RUN_ID" >> $GITHUB_OUTPUT
+      fi
+    env:
+      # 3. 使用有上游仓库访问权限的PAT
+      GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+  - name: Download Artifact
+    if: ${{ steps.get_run_id.outputs.runid != '' }}
+    uses: actions/download-artifact@v4
+    with:
+      name: ${{ github.event.inputs.vllm-ascend-branch }}-${{ steps.get_basename.outputs.model_base_name }}-V${{ matrix.version }}-report
+      path: ./accuracy/accuracy_report_bak
+      # 4. 使用有上游仓库访问权限的PAT
+      github-token: ${{ secrets.PAT_TOKEN }}
+      # 5. 指定上游仓库
+      repository: nv-action/vllm-benchmarks  # 替换为实际的上游仓库名称
+      run-id: ${{ steps.get_run_id.outputs.runid }}
+      
+  - name: Upload reports artifact
+    if: ${{ steps.get_run_id.outputs.runid != '' }}
+    uses: actions/upload-artifact@v4
+    with:
+      name: report-${{ steps.get_basename.outputs.model_base_name }}-v${{ matrix.version }}
+      path: ./accuracy/accuracy_report_bak/*.md
+      retention-days: 1
+
+  # create_pr:
+  #   runs-on: ubuntu-latest
+  #   needs: download_reports
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         ref: main
+
+  #     - name: Setup workspace
+  #       run: mkdir -p ./accuracy/accuracy_report
+
+  #     - name: Download only current run reports
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: ./accuracy/accuracy_report
+  #         pattern: report-*
+  #         github-token: ${{ secrets.GITHUB_TOKEN }}
+  #         run-id: ${{ github.run_id }}
+
+  #     - name: Delete old report
+  #       run: |
+  #         find ./accuracy/accuracy_report -maxdepth 1 -type f -name '*.md' ! -name 'index.md' -delete
+  #         find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report \;
+  #         find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
+
+  #     - name: Generate step summary
+  #       if: ${{ always() }}
+  #       run: |
+  #         for report in ./accuracy/accuracy_report/*.md; do
+  #           filename=$(basename "$report")
+  #           # skip index.md
+  #           if [ "$filename" = "index.md" ]; then
+  #             continue
+  #           fi
+
+  #           if [ -f "$report" ]; then
+  #             {
+  #               echo -e "\n\n---\n"
+  #               echo "## 📄 Report File: $(basename $report)"
+  #               cat "$report"
+  #             } >> "$GITHUB_STEP_SUMMARY"
+  #           fi
+  #         done
+
+  #     - name: Update accuracy_report/index.md
+  #       run: |
+  #         REPORT_DIR="./accuracy/accuracy_report"
+  #         INDEX_MD="$REPORT_DIR/index.md"
+
+  #         {
+  #           echo "# Accuracy Report"
+  #           echo ""
+  #           echo "::: {toctree}"
+  #           echo ":caption: Accuracy Report"
+  #           echo ":maxdepth: 1"
+            
+  #           for report in "$REPORT_DIR"/*.md; do
+  #             filename="$(basename "$report" .md)"
+  #             if [ "$filename" != "index" ]; then
+  #               echo "$filename"
+  #             fi
+  #           done
+
+  #           echo ":::"
+  #         } > "$INDEX_MD"
+
+  #     # - name: Create Pull Request
+  #     #   uses: peter-evans/create-pull-request@v7
+  #     #   with:
+  #     #     token: ${{ secrets.PAT_TOKEN }}
+  #     #     base: main
+  #     #     branch: auto-pr/accuracy-report
+  #     #     commit-message: |
+  #     #       "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+  #     #       Signed-off-by: vllm-ascend-ci <vllmcibot@gmail.com>
+  #     #     add-paths: |
+  #     #       ./accuracy/accuracy_report/*.md
+  #     #     title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+  #     #     body: |
+  #     #       The accuracy results running on Ascend NPU have changed, updating reports for:
+  #     #       ${{ 
+  #     #         github.event.inputs.models == 'all' 
+  #     #           && 'All models (Qwen2.5-7B-Instruct, Qwen2.5-VL-7B-Instruct, Qwen3-8B-Base)' 
+  #     #           || github.event.inputs.models 
+  #     #       }}
+            
+  #     #       - [Workflow run][1]
+            
+  #     #       [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #     #     signoff: true
+  #     - name: Configure Git identity
+  #       run: |
+  #         git config --global user.name "vllm-ascend-ci"
+  #         git config --global user.email "vllmcibot@gmail.com"
+
+  #     - name: Create Pull Request
+  #       uses: peter-evans/create-pull-request@v7
+  #       with:
+  #         token: ${{ secrets.PAT_TOKEN }}
+  #         base: main
+  #         branch: auto-pr/accuracy-report
+  #         commit-message: "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+  #         add-paths: |
+  #           ./accuracy/accuracy_report/*.md
+  #         title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+  #         body: |
+  #           The accuracy results running on Ascend NPU have changed, updating reports for:
+  #           ${{ github.event.inputs.models == 'all' && 'All models …' || github.event.inputs.models }}
+            
+  #           - [Workflow run][1]
+            
+  #           [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #         signoff: true
