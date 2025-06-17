@@ -165,25 +165,48 @@ jobs:
             echo ":::"
           } > "$INDEX_MD"
 
+      # - name: Create Pull Request
+      #   uses: peter-evans/create-pull-request@v7
+      #   with:
+      #     token: ${{ secrets.PAT_TOKEN }}
+      #     base: main
+      #     branch: auto-pr/accuracy-report
+      #     commit-message: |
+      #       "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+      #       Signed-off-by: vllm-ascend-ci <vllmcibot@gmail.com>
+      #     add-paths: |
+      #       ./accuracy/accuracy_report/*.md
+      #     title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+      #     body: |
+      #       The accuracy results running on Ascend NPU have changed, updating reports for:
+      #       ${{ 
+      #         github.event.inputs.models == 'all' 
+      #           && 'All models (Qwen2.5-7B-Instruct, Qwen2.5-VL-7B-Instruct, Qwen3-8B-Base)' 
+      #           || github.event.inputs.models 
+      #       }}
+            
+      #       - [Workflow run][1]
+            
+      #       [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      #     signoff: true
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "vllm-ascend-ci"
+          git config --global user.email "vllmcibot@gmail.com"
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PAT_TOKEN }}
           base: main
           branch: auto-pr/accuracy-report
-          commit-message: |
-            "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
-            Signed-off-by: vllm-ascend-ci <vllmcibot@gmail.com>
+          commit-message: "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           add-paths: |
             ./accuracy/accuracy_report/*.md
           title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           body: |
             The accuracy results running on Ascend NPU have changed, updating reports for:
-            ${{ 
-              github.event.inputs.models == 'all' 
-                && 'All models (Qwen2.5-7B-Instruct, Qwen2.5-VL-7B-Instruct, Qwen3-8B-Base)' 
-                || github.event.inputs.models 
-            }}
+            ${{ github.event.inputs.models == 'all' && 'All models …' || github.event.inputs.models }}
             
             - [Workflow run][1]
             
