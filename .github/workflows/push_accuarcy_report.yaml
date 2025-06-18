@@ -115,26 +115,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.PAT_TOKEN }}
           ref: main
 
       - name: Add upstream remote
         run: |
           git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git
-          git fetch upstream ${{ github.event.inputs.benchmark-branch }}
+          git fetch upstream
           git remote -v
-
       - name: Set Git user info dynamically
         run: |
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
-
       - name: Create or switch to branch
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           BRANCH_NAME="auto-pr/accuracy-report-${TIMESTAMP}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
           git checkout -B "${BRANCH_NAME}" upstream/${{ github.event.inputs.benchmark-branch }}
-
       - name: Setup workspace
         run: mkdir -p ./accuracy/accuracy_report
 
@@ -151,7 +149,6 @@ jobs:
           find ./accuracy/accuracy_report -maxdepth 1 -type f -name '*.md' ! -name 'index.md' -delete
           find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report \;
           find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
-
       - name: Generate step summary
         if: ${{ always() }}
         run: |
@@ -161,7 +158,6 @@ jobs:
             if [ "$filename" = "index.md" ]; then
               continue
             fi
-
             if [ -f "$report" ]; then
               {
                 echo -e "\n\n---\n"
@@ -170,7 +166,6 @@ jobs:
               } >> "$GITHUB_STEP_SUMMARY"
             fi
           done
-
       - name: Delete failed reports
         run: |
           for report in ./accuracy/accuracy_report/*.md; do
@@ -182,12 +177,10 @@ jobs:
               rm "$report"
             fi
           done
-
       - name: Update accuracy_report/index.md
         run: |
           REPORT_DIR="./accuracy/accuracy_report"
           INDEX_MD="$REPORT_DIR/index.md"
-
           {
             echo "# Accuracy Report"
             echo ""
@@ -201,16 +194,15 @@ jobs:
                 echo "$filename"
               fi
             done
-
             echo ":::"
           } > "$INDEX_MD"
-
       - name: push accuracy report
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git add ./accuracy/accuracy_report/*.md
           git commit -s -m "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           git push -f origin "${{ env.BRANCH_NAME }}"
-
       - name: Create PR in upstream via API
         uses: actions/github-script@v6
         with:
@@ -222,6 +214,16 @@ jobs:
               head: `${{ github.actor }}:${{ env.BRANCH_NAME }}`,
               base: '${{ github.event.inputs.benchmark-branch }}',
               title: `[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}`,
-              body: `This PR updates accuracy reports for branch \`${{ github.event.inputs.vllm-ascend-branch }}\`.`
+              body: `The accuracy results running on NPU Altlas A2 have changed, updating reports for:
+            ${{ 
+              github.event.inputs.models == 'all' 
+                && 'All models (Qwen2.5-7B-Instruct, Qwen2.5-VL-7B-Instruct, Qwen3-8B-Base)' 
+                || github.event.inputs.models 
+            }}
+            
+            - [Workflow run][1]
+            
+            [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
             });
             core.info(`Created PR #${pr.data.number}`);
+ 
