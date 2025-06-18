@@ -60,7 +60,7 @@ FILTER = {
 RTOL = 0.03
 ACCURACY_FLAG = ""
 
-def run_accuracy_unimodal(queue, model, dataset, accuracy_expected):
+def run_accuracy_unimodal(queue, model, dataset):
     try:
         model_args = f"pretrained={model},max_model_len=4096,dtype=auto,tensor_parallel_size=2,gpu_memory_utilization=0.6"
         results = lm_eval.simple_evaluate(
@@ -84,7 +84,7 @@ def run_accuracy_unimodal(queue, model, dataset, accuracy_expected):
         gc.collect()
 
 
-def run_accuracy_multimodal(queue, model, dataset, accuracy_expected):
+def run_accuracy_multimodal(queue, model, dataset):
     try:
         model_args = f"pretrained={model},max_model_len=8192,dtype=auto,tensor_parallel_size=4,max_images=2"
         results = lm_eval.simple_evaluate(
@@ -215,7 +215,7 @@ def main(args):
             accuracy_expected = accuracy_data[args.vllm_use_v1][args.model][dataset]
             p = multiprocessing.Process(target=run_accuracy_unimodal,
                                         args=(result_queue, args.model,
-                                              dataset, accuracy_expected))
+                                              dataset))
             p.start()
             p.join()
             result = result_queue.get()
@@ -231,7 +231,7 @@ def main(args):
             accuracy_expected = accuracy_data[args.vllm_use_v1][args.model][dataset]
             p = multiprocessing.Process(target=run_accuracy_multimodal,
                                         args=(result_queue, args.model,
-                                              dataset, accuracy_expected))
+                                              dataset))
             p.start()
             p.join()
             result = result_queue.get()

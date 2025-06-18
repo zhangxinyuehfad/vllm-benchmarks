@@ -89,7 +89,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN  }}
           repository: ${{ github.repository }}
           run-id: ${{ steps.get_run_id.outputs.runid }}
-          
+
       - name: Upload reports artifact
         if: ${{ steps.get_run_id.outputs.runid != '' }}
         uses: actions/upload-artifact@v4
@@ -123,6 +123,18 @@ jobs:
           find ./accuracy/accuracy_report -maxdepth 1 -type f -name '*.md' ! -name 'index.md' -delete
           find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report \;
           find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
+      
+      - name: Delete failed reports
+        run: |
+          for report in ./accuracy/accuracy_report/*.md; do
+            [[ "$(basename "$report")" == "index.md" ]] && continue
+            first_line=$(head -n 1 "$report")
+            echo "Checking $report: $first_line"
+            if [[ "$first_line" == *"❌"* ]]; then
+              echo "❌ failure detected in $report, deleting..."
+              rm "$report"
+            fi
+          done
 
       - name: Generate step summary
         if: ${{ always() }}
@@ -165,48 +177,25 @@ jobs:
             echo ":::"
           } > "$INDEX_MD"
 
-      # - name: Create Pull Request
-      #   uses: peter-evans/create-pull-request@v7
-      #   with:
-      #     token: ${{ secrets.PAT_TOKEN }}
-      #     base: main
-      #     branch: auto-pr/accuracy-report
-      #     commit-message: |
-      #       "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
-      #       Signed-off-by: vllm-ascend-ci <vllmcibot@gmail.com>
-      #     add-paths: |
-      #       ./accuracy/accuracy_report/*.md
-      #     title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
-      #     body: |
-      #       The accuracy results running on Ascend NPU have changed, updating reports for:
-      #       ${{ 
-      #         github.event.inputs.models == 'all' 
-      #           && 'All models (Qwen2.5-7B-Instruct, Qwen2.5-VL-7B-Instruct, Qwen3-8B-Base)' 
-      #           || github.event.inputs.models 
-      #       }}
-            
-      #       - [Workflow run][1]
-            
-      #       [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      #     signoff: true
-      - name: Configure Git identity
-        run: |
-          git config --global user.name "vllm-ascend-ci"
-          git config --global user.email "vllmcibot@gmail.com"
-
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PAT_TOKEN }}
           base: main
           branch: auto-pr/accuracy-report
-          commit-message: "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+          commit-message: |
+            "Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+            Signed-off-by: vllm-ascend-ci <vllmcibot@gmail.com>
           add-paths: |
             ./accuracy/accuracy_report/*.md
           title: "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
           body: |
             The accuracy results running on Ascend NPU have changed, updating reports for:
-            ${{ github.event.inputs.models == 'all' && 'All models …' || github.event.inputs.models }}
+            ${{ 
+              github.event.inputs.models == 'all' 
+                && 'All models (Qwen2.5-7B-Instruct, Qwen2.5-VL-7B-Instruct, Qwen3-8B-Base)' 
+                || github.event.inputs.models 
+            }}
             
             - [Workflow run][1]
             

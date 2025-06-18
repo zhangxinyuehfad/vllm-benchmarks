@@ -46,8 +46,9 @@ defaults:
   run:
     shell: bash -el {0}
 
+# only cancel in-progress runs of the same workflow
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -105,6 +106,8 @@ jobs:
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        DATASET_SOURCE: ModelScope
+        VLLM_USE_MODELSCOPE: True
         # 1. If version specified (work_dispatch), do specified branch accuracy test
         # 2. If no version (labeled PR), do accuracy test by default ref:
         # The branch, tag or SHA to checkout. When checking out the repository that
@@ -140,7 +143,7 @@ jobs:
           repository: vllm-project/vllm
           path: ./vllm-empty
           # Please also update this when bump matched version
-          ref: ${{ github.event.inputs.vllm-version || 'v0.9.0' }}
+          ref: ${{ github.event.inputs.vllm-version || 'v0.9.1' }}
 
       - name: Install vllm-project/vllm from source
         working-directory: ./vllm-empty
@@ -155,9 +158,11 @@ jobs:
 
       - name: Install vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
+        env:
+          PIP_EXTRA_INDEX_URL: https://mirrors.huaweicloud.com/ascend/repos/pypi
         run: |
           pip install -r requirements-dev.txt
-          pip install -e .
+          pip install -v -e . 
             
       - name: Get vLLM commit hash and URL
         working-directory: ./vllm-empty
@@ -245,20 +250,21 @@ jobs:
         run: |
           cat ./accuracy/${{ steps.report.outputs.markdown_name }}.md >> $GITHUB_STEP_SUMMARY
 
-      - name: Check report first line for failure
-        id: check_report
-        run: |
-          REPORT_PATH="./accuracy/${{ steps.report.outputs.markdown_name }}.md"
-          first_line=$(head -n 1 "$REPORT_PATH")
-          echo "First line: $first_line"
-          if [[ "$first_line" == *"❌"* ]]; then
-            echo "contains_fail=true" >> $GITHUB_OUTPUT
-          else
-            echo "contains_fail=false" >> $GITHUB_OUTPUT
-          fi
+      # - name: Check report first line for failure
+      #   id: check_report
+      #   run: |
+      #     REPORT_PATH="./accuracy/${{ steps.report.outputs.markdown_name }}.md"
+      #     first_line=$(head -n 1 "$REPORT_PATH")
+      #     echo "First line: $first_line"
+      #     if [[ "$first_line" == *"❌"* ]]; then
+      #       echo "contains_fail=true" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "contains_fail=false" >> $GITHUB_OUTPUT
+      #     fi
 
       - name: Upload Report for V${{ matrix.vllm_use_version }}
-        if: ${{ github.event_name == 'workflow_dispatch' && steps.check_report.outputs.contains_fail == 'false' }}
+        # if: ${{ github.event_name == 'workflow_dispatch' && steps.check_report.outputs.contains_fail == 'false' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: "${{ env.GHA_VLLM_ASCEND_VERSION }}-${{ steps.report.outputs.markdown_name }}-report"
