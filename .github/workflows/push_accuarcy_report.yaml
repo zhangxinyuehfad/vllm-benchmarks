@@ -120,7 +120,7 @@ jobs:
       - name: Add upstream remote
         run: |
           git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git
-          git fetch upstream ${{ github.event.inputs.benchmark-branch }}
+          git fetch upstream
           git remote -v
 
       - name: Set Git user info dynamically
