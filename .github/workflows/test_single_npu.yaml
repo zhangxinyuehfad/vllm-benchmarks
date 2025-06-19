@@ -14,10 +14,6 @@ on:
         options:
           - main
           - v0.9.1
-          - v0.9.1rc2
-          - v0.9.1rc1
-          - v0.9.0.1
-          - v0.9.0
           - v0.7.3
       vllm-ascend-version:
         description: 'vllm-ascend version:'
@@ -25,9 +21,15 @@ on:
         type: choice
         options:
           - main
-          - v0.9.0rc2
-          - v0.9.0-dev
+          - v0.9.1-dev
           - v0.7.3-dev
+      benchmark-branch:
+        description: 'benchmark branch:'
+        required: true
+        type: choice
+        options:
+          - main
+          - accuarcy-test-dev-2
       models:
         description: 'model:'
         required: true
@@ -106,8 +108,9 @@ jobs:
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        DATASET_SOURCE: ModelScope
-        VLLM_USE_MODELSCOPE: True
+        # DATASET_SOURCE: ModelScope
+        USE_MODELSCOPE_HUB: 0
+        # VLLM_USE_MODELSCOPE: True
         # 1. If version specified (work_dispatch), do specified branch accuracy test
         # 2. If no version (labeled PR), do accuracy test by default ref:
         # The branch, tag or SHA to checkout. When checking out the repository that
@@ -250,25 +253,134 @@ jobs:
         run: |
           cat ./accuracy/${{ steps.report.outputs.markdown_name }}.md >> $GITHUB_STEP_SUMMARY
 
-      # - name: Check report first line for failure
-      #   id: check_report
-      #   run: |
-      #     REPORT_PATH="./accuracy/${{ steps.report.outputs.markdown_name }}.md"
-      #     first_line=$(head -n 1 "$REPORT_PATH")
-      #     echo "First line: $first_line"
-      #     if [[ "$first_line" == *"❌"* ]]; then
-      #       echo "contains_fail=true" >> $GITHUB_OUTPUT
-      #     else
-      #       echo "contains_fail=false" >> $GITHUB_OUTPUT
-      #     fi
+      - name: Check report first line for failure
+        id: check_report
+        run: |
+          REPORT_PATH="./accuracy/${{ steps.report.outputs.markdown_name }}.md"
+          echo "Scanning $REPORT_PATH for ❌ …"
+          if grep -q '❌' "$REPORT_PATH"; then
+            echo "contains_fail=true" >> $GITHUB_OUTPUT
+          else
+            echo "contains_fail=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload Report for V${{ matrix.vllm_use_version }}
-        # if: ${{ github.event_name == 'workflow_dispatch' && steps.check_report.outputs.contains_fail == 'false' }}
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && steps.check_report.outputs.contains_fail == 'false' }}
         uses: actions/upload-artifact@v4
         with:
-          name: "${{ env.GHA_VLLM_ASCEND_VERSION }}-${{ steps.report.outputs.markdown_name }}-report"
+          name: "report-${{ env.GHA_VLLM_ASCEND_VERSION }}-${{ steps.report.outputs.markdown_name }}"
           path: ./accuracy/${{ steps.report.outputs.markdown_name }}.md
           if-no-files-found: warn
           retention-days: 90
           overwrite: true
+
+  create_pr:
+    runs-on: ubuntu-latest
+    needs: accuracy_tests
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    env:
+      UPSTREAM_REPO: nv-action/vllm-benchmarks
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: zhangxinyuehfad/vllm-benchmarks
+          token: ${{ secrets.PAT_TOKEN }}
+          ref: main
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git
+          git fetch upstream
+          git remote -v
+
+      - name: Set Git user info dynamically
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Create or switch to branch
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          BRANCH_NAME="auto-pr/accuracy-report-${TIMESTAMP}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+          git checkout -B "${BRANCH_NAME}" upstream/${{ github.event.inputs.benchmark-branch }}
+
+      - name: Download only current run reports
+        uses: actions/download-artifact@v4
+        with:
+          path: ./accuracy/accuracy_report
+          pattern: report-*
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.run_id }}
+
+      - name: Delete old report
+        run: |
+          find ./accuracy/accuracy_report -maxdepth 1 -type f -name '*.md' ! -name 'index.md' -delete
+          find ./accuracy/accuracy_report -mindepth 2 -type f -name '*.md' -exec mv -f {} ./accuracy/accuracy_report \;
+          find ./accuracy/accuracy_report -mindepth 1 -type d -empty -delete
+
+      - name: Delete failed reports
+        run: |
+          for report in ./accuracy/accuracy_report/*.md; do
+            [[ "$(basename "$report")" == "index.md" ]] && continue
+            first_line=$(head -n 1 "$report")
+            echo "Scanning $report for ❌ …"
+              if grep -q '❌' "$report"; then
+                echo "❌ failure detected in $report, deleting..."
+                rm "$report"
+              fi
+          done
+
+      - name: Update accuracy_report/index.md
+        run: |
+          REPORT_DIR="./accuracy/accuracy_report"
+          INDEX_MD="$REPORT_DIR/index.md"
+          {
+            echo "# Accuracy Report"
+            echo ""
+            echo "::: {toctree}"
+            echo ":caption: Accuracy Report"
+            echo ":maxdepth: 1"
+            
+            for report in "$REPORT_DIR"/*.md; do
+              filename="$(basename "$report" .md)"
+              if [ "$filename" != "index" ]; then
+                echo "$filename"
+              fi
+            done
+            echo ":::"
+          } > "$INDEX_MD"
+
+      - name: push accuracy report
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git add ./accuracy/accuracy_report/*.md
+          git commit -s -m "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
+          git push -f origin "${{ env.BRANCH_NAME }}"
+
+      - name: Create PR in upstream via API
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            const pr = await github.rest.pulls.create({
+              owner: 'nv-action',
+              repo: 'vllm-benchmarks',
+              head: `${{ github.actor }}:${{ env.BRANCH_NAME }}`,
+              base: '${{ github.event.inputs.benchmark-branch }}',
+              title: `[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}`,
+              body: `The accuracy results running on NPU Altlas A2 have changed, updating reports for:
+            ${{ 
+              github.event.inputs.models == 'all' 
+                && 'All models (Qwen2.5-7B-Instruct, Qwen2.5-VL-7B-Instruct, Qwen3-8B-Base)' 
+                || github.event.inputs.models 
+            }}
+            
+            - [Workflow run][1]
+            
+            [1]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+            });
+            core.info(`Created PR #${pr.data.number}`);
+ 
