@@ -274,7 +274,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: zhangxinyuehfad/vllm-benchmarks
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.PAT_PR_TOKEN }}
           ref: main
 
       - name: Add upstream remote
@@ -337,7 +337,7 @@ jobs:
           } > "$INDEX_MD"
       - name: push accuracy report
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_PR_TOKEN }}
         run: |
           git add ./accuracy/accuracy_report/*.md
           git commit -s -m "[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-branch }}"
@@ -345,7 +345,7 @@ jobs:
       - name: Create PR in upstream via API
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.PAT_TOKEN }}
+          github-token: ${{ secrets.PAT_PR_TOKEN }}
           script: |
             const pr = await github.rest.pulls.create({
               owner: 'nv-action',
