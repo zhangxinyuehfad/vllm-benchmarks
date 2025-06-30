@@ -94,6 +94,7 @@ jobs:
         with:
           repository: vllm-project/vllm-ascend
           path: ./vllm-ascend
+          ref: perf-4
           fetch-depth: 0
 
       - name: Install vllm-project/vllm from source
