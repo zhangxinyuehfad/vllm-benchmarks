@@ -86,9 +86,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm
-          path: ./
-          fetch-depth: 0
-          
+          path: ./vllm_empty
+          ref: v0.9.1
+
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
@@ -100,89 +100,16 @@ jobs:
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
 
-      - name: Download pta
-        run: |
-          if [ ! -d /root/.cache/pta ]; then
-            mkdir -p /root/.cache/pta
-          fi
-  
-          if [ ! -f /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ]; then
-            cd /root/.cache/pta
-            rm -rf pytorch_v2.5.1_py310*
-            wget https://pytorch-package.obs.cn-north-4.myhuaweicloud.com/pta/Daily/v2.5.1/20250320.3/pytorch_v2.5.1_py310.tar.gz
-            tar -zxvf pytorch_v2.5.1_py310.tar.gz
-          fi
-  
-          pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-  
       - name: Install vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
+        env:
+          PIP_EXTRA_INDEX_URL: https://mirrors.huaweicloud.com/ascend/repos/pypi
         run: |
           pip install -e .
+          pip install -r benchmarks/requirements-bench.txt
 
-      - name: Checkout nv-action/vllm-benchmarks repo
-        uses: actions/checkout@v4
-        with:
-          repository: nv-action/vllm-benchmarks
-          path: ./vllm-benchmarks
-      
-      - name: Install benchmark dependencies
-        working-directory: ./vllm-benchmarks
+      - name: Run benchmarks
+        working-directory: ./vllm-ascend
         run: |
-          pip install -r requirements.txt
-      
-      - name: Checkout cosdt/elastic-tool
-        uses: actions/checkout@v4
-        with:
-          repository: cosdt/elastic-tool
-          path: ./elastic_tool
-          ref: 0.1.0-dev
-
-      - name: Install elastic_tool
-        working-directory: ./elastic_tool
-        run: |
+          git checkout 2cf9c4c3a2fcc53629de41f9268d958ce11c60c8
           pip install -e .
-          
-      - name: Collect pr info from vllm-project/vllm-ascend
-        working-directory: ./vllm-ascend
-        run: |
-          # Only get the pull request which may influences performance
-          git log --pretty=format:"%H %s" -- '**/*.py' ':!docs/*' ':!tests/*' ':!examples/*' > commit_log.txt
-          escli check commit_log.txt --tag $(git branch --show-current)
-
-      - name: Prepare dataset
-        working-directory: ./vllm-benchmarks
-        run: |
-          cp /root/.cache/datasets/sharegpt/ShareGPT_V3_unfiltered_cleaned_split.json ./benchmarks
-
-      - name: Run benchmark iteration
-        working-directory: ./vllm-ascend
-        run: |
-          cur_tag=$(git branch --show-current)
-          while IFS= read -r line || [[ -n "$line" ]]; do
-            commit_id=$(awk '{print $1}' <<< "$line")
-            commit_title=$(awk '{$1=""; print substr($0, 2)}' <<< "$line")
-            commit_time=$(git show -s --format=%cd $commit_hash --date=iso-strict)
-            commit_time_no_tz=$(echo "$commit_time" | sed 's/[+-][0-9][0-9]:[0-9][0-9]$//')
-
-            git checkout $commit_id
-            pip install -e .
-            pip install /root/.cache/pta/torch_npu-2.5.1.dev20250320-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-            echo "------------------------"
-            echo "commit_id: $commit_id"
-            echo "commit_title: $commit_title"
-            echo "commit_time: $commit_time_no_tz"
-            echo "cur_tag: $cur_tag"
-            echo "------------------------"
-            # for now we use current repo script to have a test
-            cd ../vllm-benchmarks
-            bash benchmarks/scripts/run-performance-benchmarks.sh
-            # send the result to es
-            escli add --tag $cur_tag \
-            --commit_id $commit_id \
-            --commit_title "$commit_title" \
-            --created_at "$commit_time_no_tz" \
-            --res_dir ./benchmarks/results 
-            rm -rf ./benchmarks/results
-            cd -
-          done < commit_log.txt
