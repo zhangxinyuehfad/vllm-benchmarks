@@ -97,6 +97,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install vllm-project/vllm from source
+        working-directory: ./vllm_empty
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
 
