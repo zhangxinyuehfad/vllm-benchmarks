@@ -34,8 +34,8 @@ on:
         required: true
         type: choice
         options:
-          - ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
-        default: 'ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10'
+          - m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
+        default: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
         description: 'The docker image which will be loaded'
 
 
