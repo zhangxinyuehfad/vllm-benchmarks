@@ -101,7 +101,7 @@ jobs:
         working-directory: ./vllm-ascend
         run: |
           echo "$GITHUB_WORKSPACE"
-          bash benchmarks/scripts/patch_benchmark_dataset.py
+          python benchmarks/scripts/patch_benchmark_dataset.py
           
 
       - name: Install vllm-project/vllm from source
