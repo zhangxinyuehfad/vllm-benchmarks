@@ -92,12 +92,17 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          repository: vllm-project/vllm-ascend
+          repository: Potabk/vllm-ascend
           path: ./vllm-ascend
+          ref: perf-7
+          fetch-depth: 0
 
       - name: print
+        working-directory: ./vllm-ascend
         run: |
           echo "$GITHUB_WORKSPACE"
+          bash benchmarks/scripts/patch_benchmark_dataset.py
+          
 
       - name: Install vllm-project/vllm from source
         working-directory: ./vllm_empty
