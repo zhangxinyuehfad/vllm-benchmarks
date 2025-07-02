@@ -1,11 +1,11 @@
 # Qwen2.5-VL-7B-Instruct
-**vLLM Version**: vLLM: 0.9.1 ([b6553be](https://github.com/vllm-project/vllm/commit/b6553be)), **vLLM Ascend**: main ([0e43813](https://github.com/vllm-project/vllm-ascend/commit/0e43813))
+**vLLM Version**: vLLM: 0.9.1 ([b6553be](https://github.com/vllm-project/vllm/commit/b6553be)), **vLLM Ascend**: main ([0e43813](https://github.com/vllm-project/vllm-ascend/commit/0e43813))  
 **Software Environment**: CANN: 8.1.RC1, PyTorch: 2.5.1, torch-npu: 2.5.1.post1.dev20250619  
 **Hardware Environment**: Atlas A2 Series  
 **Datasets**: mmmu_val  
 **vLLM Engine**: V1  
-**Parallel Mode**: TP
-**Execution Mode**: aclgraph
+**Parallel Mode**: TP  
+**Execution Mode**: aclgraph  
 **Command**:  
 ```bash
 export MODEL_ARGS='pretrained=Qwen/Qwen2.5-VL-7B-Instruct,max_model_len=8192,dtype=auto,tensor_parallel_size=2,max_images=2'
