@@ -39,15 +39,15 @@ defaults:
 jobs:
   download:
     name: Download dataset from Hugging Face Hub
-    runs-on: linux-arm64-npu-2
+    runs-on: linux-arm64-npu-0
     container:
       image: ${{ inputs.image }}
       env:
-        HF_ENDPOINT: https://hf-mirror.com            # 如有私有镜像源可配置
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}             # HF 访问令牌
+        HF_ENDPOINT: https://hf-mirror.com
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
         HF_HUB_ETAG_TIMEOUT: 600
         HF_HUB_DOWNLOAD_TIMEOUT: 600
-        CURL_CA_BUNDLE: ""                            # 如有特殊 CA 需求可保留
+        CURL_CA_BUNDLE: ""
     steps:
       - name: 配置系统镜像源
         run: |
@@ -63,21 +63,22 @@ jobs:
         run: |
           echo "HF_TOKEN prefix: ${HF_TOKEN:0:4}****"
 
-      - name: 从 Hugging Face Hub 下载数据集
+      - name: 从 Hugging Face Hub 下载并加载数据集
         run: |
           python3 - << 'EOF'
-          from huggingface_hub import snapshot_download
           import os
+          from datasets import load_dataset
 
+          # 直接用 GitHub Actions 的 inputs.dataset 变量
           repo_id = "${{ inputs.dataset }}"
-          # 如果你要指定缓存目录，可传入 cache_dir 参数
-          snapshot_download(
-              repo_id=repo_id,
-              repo_type="dataset",            # 明确下载的是数据集
-              use_auth_token=os.environ["HF_TOKEN"],
-              resume_download=True,           # 支持断点续传
-              cache_dir="/root/.cache/huggingface",
-              local_dir=f"./datasets/{repo_id.replace('/', '_')}"
+
+          # load_dataset 会自动下载脚本并执行，抓取实际数据
+          ds = load_dataset(
+              repo_id,
+              cache_dir="/root/.cache/huggingface",   # 脚本和数据都缓存到这里
           )
-          print(f"数据集已下载到：/root/.cache/huggingface/datasets/{repo_id.replace('/', '_')}")
+
+          # 打印下载结果，确认哪些 split 可用
+          print("下载完毕，包含的 split：", ds.keys())
+          print("缓存路径示例：", os.path.join("/root/.cache/huggingface", "datasets", repo_id.replace('/', '_')))
           EOF
