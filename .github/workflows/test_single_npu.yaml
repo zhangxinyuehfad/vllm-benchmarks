@@ -55,7 +55,6 @@ concurrency:
 
 jobs:
   accuracy_tests:
-    timeout-minutes: 700
     # test will be triggered when tag '*-accuracy-test' & 'ready-for-test' or workflow_dispatch job
     if:  >-
       ${{
