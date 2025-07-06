@@ -39,7 +39,7 @@ defaults:
 jobs:
   download:
     name: Download dataset from Hugging Face Hub
-    runs-on: linux-arm64-npu-0
+    runs-on: linux-arm64-npu-2
     container:
       image: ${{ inputs.image }}
       env:
