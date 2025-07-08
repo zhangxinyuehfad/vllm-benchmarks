@@ -49,7 +49,7 @@ jobs:
           else
             npu-smi info
           fi
-          # sleep 3600
+          sleep 3600
     #     run: npu-smi info
     #   - name: CANN info
     #     run: cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
