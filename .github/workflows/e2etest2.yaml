@@ -15,19 +15,10 @@
 # This file is a part of the vllm-ascend project.
 #
 
-name: 'e2e test2'
+name: 'test'
 
 on:
   workflow_dispatch:
-    inputs:
-      runner:
-        required: true
-        type: choice
-        options:
-          - linux-arm64-npu-4
-          - linux-arm64-npu-1
-        default: 'linux-arm64-npu-1'
-        description: 'The runner selected to run on'
 
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
@@ -36,19 +27,27 @@ defaults:
   run:
     shell: bash -el {0}
 
+# only cancel in-progress runs of the same workflow
+# and ignore the lint / 1 card / 4 cards test type
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: vLLM Ascend test main
-    runs-on: linux-arm64-npu-1
+  e2e:
+    strategy:
+      max-parallel: 2
+      matrix:
+        os: [linux-arrch64-a2-1]
+        vllm_version: [main, v0.9.2]
+    name: singlecard e2e test
+    runs-on: ${{ matrix.os }}
     container:
+      # TODO(yikun): Remove m.daocloud.io prefix when infra proxy ready
       image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
       env:
-        HF_ENDPOINT: https://hf-mirror.com
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        VLLM_LOGGING_LEVEL: ERROR
+        VLLM_USE_MODELSCOPE: True
     steps:
       - name: Check npu and CANN info
         run: |
@@ -66,8 +65,8 @@ jobs:
       - name: Checkout vllm-project/vllm-ascend repo
         uses: actions/checkout@v4
         with:
-          ref: dev
-          repository: Potabk/vllm-ascend
+          repository: MengqingCao/vllm-ascend-fork
+          ref: multicard
           path: ./
 
       - name: Install system dependencies
@@ -79,12 +78,157 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm
+          ref: ${{ matrix.vllm_version }}
           path: ./vllm-empty
 
-      - name: Install vllm-project/vllm-ascend
+      - name: Install vllm-project/vllm from source
+        working-directory: ./vllm-empty
         run: |
-            pip install -r requirements-dev.txt
+          VLLM_TARGET_DEVICE=empty pip install -e .
 
-      - name: Run vllm-project/vllm-ascend e2e test
+      - name: Install vllm-project/vllm-ascend
+        env:
+          PIP_EXTRA_INDEX_URL: https://mirrors.huaweicloud.com/ascend/repos/pypi
         run: |
-          pytest -sv ./vllm-empty/tests/entrypoints/openai/test_completion_with_prompt_embeds.py
+          pip install -r requirements-dev.txt
+          pip install -v -e .
+
+      - name: Run e2e test for V1 Engine
+        env:
+          VLLM_USE_V1: 1
+          VLLM_WORKER_MULTIPROC_METHOD: spawn
+          VLLM_USE_MODELSCOPE: True
+        run: |
+          pytest -sv tests/e2e/singlecard/test_offline_inference.py
+          pytest -sv tests/e2e/singlecard/test_ilama_lora.py
+          pytest -sv tests/e2e/singlecard/test_guided_decoding.py
+          pytest -sv tests/e2e/singlecard/test_camem.py
+          pytest -sv tests/e2e/singlecard/test_embedding.py
+          pytest -sv tests/e2e/singlecard/ \
+          --ignore=tests/e2e/singlecard/test_offline_inference.py \
+          --ignore=tests/e2e/singlecard/test_ilama_lora.py \
+          --ignore=tests/e2e/singlecard/test_guided_decoding.py \
+          --ignore=tests/e2e/singlecard/test_camem.py \
+          --ignore=tests/e2e/singlecard/test_embedding.py \
+          --ignore=tests/e2e/singlecard/spec_decode_v1/test_v1_mtp_correctness.py \
+          --ignore=tests/e2e/singlecard/spec_decode_v1/test_v1_spec_decode.py
+          # ------------------------------------ v1 spec decode test ------------------------------------ #
+          VLLM_USE_MODELSCOPE=True pytest -sv tests/e2e/singlecard/spec_decode_v1/test_v1_mtp_correctness.py
+          # TODO: revert me when test_v1_spec_decode.py::test_ngram_correctness is fixed
+          VLLM_USE_MODELSCOPE=True pytest -sv tests/e2e/singlecard/spec_decode_v1/test_v1_spec_decode.py
+
+      - name: Run e2e test on V0 engine
+        if: ${{ github.event_name == 'schedule' }}
+        env:
+          VLLM_USE_V1: 0
+          VLLM_USE_MODELSCOPE: True
+        run: |
+          pytest -sv tests/e2e/singlecard/test_offline_inference.py
+          pytest -sv tests/e2e/singlecard/test_ilama_lora.py
+          pytest -sv tests/e2e/singlecard/test_guided_decoding.py
+          pytest -sv tests/e2e/singlecard/test_camem.py
+          pytest -sv tests/e2e/singlecard/test_prompt_embedding.py
+          pytest -sv tests/e2e/singlecard/test_embedding.py
+          pytest -sv tests/e2e/singlecard/ \
+            --ignore=tests/e2e/singlecard/test_offline_inference.py \
+            --ignore=tests/e2e/singlecard/test_ilama_lora.py \
+            --ignore=tests/e2e/singlecard/test_guided_decoding.py \
+            --ignore=tests/e2e/singlecard/test_camem.py \
+            --ignore=tests/e2e/singlecard/test_prompt_embedding.py \
+            --ignore=tests/e2e/singlecard/test_embedding.py
+
+  e2e-2-cards:
+    strategy:
+      max-parallel: 2
+      matrix:
+        os: [linux-arrch64-a2-2]
+        vllm_version: [main, v0.9.2]
+    name: multicard e2e test
+    runs-on: ${{ matrix.os }}
+    container:
+      # TODO(yikun): Remove m.daocloud.io prefix when infra proxy ready
+      image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-910b-ubuntu22.04-py3.10
+      env:
+        VLLM_LOGGING_LEVEL: ERROR
+        VLLM_USE_MODELSCOPE: True
+    steps:
+      - name: Check npu and CANN info
+        run: |
+          npu-smi info
+          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
+
+      - name: Config mirrors
+        run: |
+          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+          apt-get update -y
+          apt install git -y
+          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
+
+      - name: Checkout vllm-project/vllm-ascend repo
+        uses: actions/checkout@v4
+        with:
+          repository: MengqingCao/vllm-ascend-fork
+          ref: multicard
+          path: ./
+
+      - name: Install system dependencies
+        run: |
+          apt-get -y install `cat packages.txt`
+          apt-get -y install gcc g++ cmake libnuma-dev
+
+      - name: Checkout vllm-project/vllm repo
+        uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm
+          ref: ${{ matrix.vllm_version }}
+          path: ./vllm-empty
+
+      - name: Install vllm-project/vllm from source
+        working-directory: ./vllm-empty
+        run: |
+          VLLM_TARGET_DEVICE=empty pip install -e .
+
+      - name: Install vllm-project/vllm-ascend
+        env:
+          PIP_EXTRA_INDEX_URL: https://mirrors.huaweicloud.com/ascend/repos/pypi
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -v -e .
+
+      - name: Run vllm-project/vllm-ascend test for V1 Engine
+        env:
+          VLLM_USE_V1: 1
+          VLLM_WORKER_MULTIPROC_METHOD: spawn
+          VLLM_USE_MODELSCOPE: True
+        run: |
+          pytest -sv tests/e2e/multicard/test_ilama_lora_tp2.py
+          # Fixme: run VLLM_USE_MODELSCOPE=True pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py will raise error.
+          # To avoid oom, we need to run the test in a single process.
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_DeepSeek_multistream_moe
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_QwQ
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_topk
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_DeepSeek_W8A8
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_DeepSeek_dbo
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_DeepSeekV3_dbo
+          pytest -sv tests/e2e/multicard/test_data_parallel.py
+          pytest -sv tests/e2e/multicard/ --ignore=tests/e2e/multicard/test_ilama_lora_tp2.py \
+            --ignore=tests/e2e/multicard/test_offline_inference_distributed.py \
+            --ignore=tests/e2e/multicard/test_data_parallel.py
+
+      - name: Run vllm-project/vllm-ascend test on V0 engine
+        if: ${{ github.event_name == 'schedule' }}
+        env:
+          VLLM_USE_V1: 0
+          VLLM_USE_MODELSCOPE: True
+        run: |
+          pytest -sv tests/e2e/multicard/test_ilama_lora_tp2.py
+          # Fixme: run VLLM_USE_MODELSCOPE=True pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py will raise error.
+          # To avoid oom, we need to run the test in a single process.
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_QwQ
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_topk
+          pytest -sv tests/e2e/multicard/test_offline_inference_distributed.py::test_models_distributed_DeepSeek_W8A8
+          pytest -sv tests/e2e/multicard/test_data_parallel.py
+          pytest -sv tests/e2e/multicard/ --ignore=tests/e2e/multicard/test_ilama_lora_tp2.py \
+            --ignore=tests/e2e/multicard/test_offline_inference_distributed.py \
+            --ignore=tests/e2e/multicard/test_data_parallel.py
