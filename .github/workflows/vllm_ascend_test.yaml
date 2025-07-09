@@ -45,7 +45,8 @@ jobs:
       
       - name: npu-smi info
         run: |
-          if [[ "${{ matrix.os }}" == "linux-arm64-npu-0" ]]; then
+          # if [[ "${{ matrix.os }}" == "linux-arm64-npu-0" ]]; then
+          if [[ "${{ matrix.os }}" == "linux-aarch64-a2-0" ]]; then
             echo "hello"
           else
             npu-smi info
