@@ -111,6 +111,7 @@ jobs:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
         VLLM_USE_MODELSCOPE: True
         DATASET_SOURCE: ModelScope 
+        HF_DATASETS_OFFLINE: True
         # 1. If version specified (work_dispatch), do specified branch accuracy test
         # 2. If no version (labeled PR), do accuracy test by default ref:
         # The branch, tag or SHA to checkout. When checking out the repository that
