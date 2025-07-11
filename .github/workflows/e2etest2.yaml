@@ -226,6 +226,7 @@ jobs:
         run: |
           pip install -r requirements-dev.txt
           pip install -v -e .
+          sleep 10000
 
       - name: Run vllm-project/vllm-ascend test for V1 Engine
         env:
