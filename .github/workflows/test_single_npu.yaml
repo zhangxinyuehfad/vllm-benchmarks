@@ -244,7 +244,7 @@ jobs:
           python ./run_accuracy.py \
             --model "${{ matrix.model_name }}" \
             --output "${markdown_name}.md" \
-            --vllm_ascend_version "${{ env.GHA_VLLM_ASCEND_VERSION }}" \
+            --vllm_ascend_version "${{ env.GHA_VLLM_ASCEND_VERSION || github.ref }}" \
             --cann_version "${{ env.GHA_CANN_VERSION }}" \
             --torch_npu_version "${{ env.GHA_TORCH_NPU_VERSION }}" \
             --torch_version "${{ env.GHA_TORCH_VERSION }}" \
