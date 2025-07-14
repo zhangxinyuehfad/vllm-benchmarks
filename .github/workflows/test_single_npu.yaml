@@ -163,10 +163,6 @@ jobs:
               echo "Resolved to tag: $LATEST_TAG"
               RESOLVED_VERSION="$LATEST_TAG"
             fi
-          
-          elif [[ -z "$VERSION_INPUT" ]]; then
-              RESOLVED_VERSION=${{ github.ref }}
-          
           else
             RESOLVED_VERSION="$VERSION_INPUT"
           fi
