@@ -75,21 +75,26 @@ jobs:
           apt-get update -y
           apt install git -y
           git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
-
-      - name: Checkout vllm-project/vllm-ascend repo
-        uses: actions/checkout@v4
-
-      - name: Install system dependencies
-        run: |
-          apt-get -y install `cat packages.txt`
-          apt-get -y install gcc g++ cmake libnuma-dev net-tools
-
+          
       - name: Checkout vllm-project/vllm repo
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm
           ref: ${{ matrix.vllm_version }}
           path: ./vllm-empty
+          
+      - name: Checkout vllm-project/vllm-ascend repo
+        uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm-ascend
+          path: ./vllm-ascend
+
+      - name: Install system dependencies
+        run: |
+          apt-get -y install `cat packages.txt`
+          apt-get -y install gcc g++ cmake libnuma-dev net-tools
+
+
 
       - name: Install vllm-project/vllm from source
         working-directory: ./vllm-empty
