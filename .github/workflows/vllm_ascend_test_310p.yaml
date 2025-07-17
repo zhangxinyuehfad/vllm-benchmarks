@@ -41,7 +41,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  310p_e2e:
+  e2e:
     # 310p-test will be triggered when tag '310p-test' & 'ready-for-test' or schedule job
     if: >- 
       ${{ 
