@@ -92,9 +92,85 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get -y install `cat packages.txt`
-          apt-get -y install gcc g++ cmake libnuma-dev net-tools
+          apt-get -y install git vim wget net-tools gcc g++ cmake libnuma-dev curl gnupg2
+
+      - name: Install vllm-project/vllm from source
+        working-directory: ./vllm-empty
+        run: |
+          VLLM_TARGET_DEVICE=empty pip install -e .
+
+      - name: Install vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
+        env:
+          PIP_EXTRA_INDEX_URL: https://mirrors.huaweicloud.com/ascend/repos/pypi
+        run: |
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/Ascend/ascend-toolkit/latest/x86_64-linux/devlib
+          export SOC_VERSION=ASCEND310P3 
+          pip install -r requirements-dev.txt
+          pip install -v -e .
+          pip install cache purge
+
+      - name: Run e2e test
+        env:
+          VLLM_WORKER_MULTIPROC_METHOD: spawn
+          VLLM_USE_MODELSCOPE: True
+        run: |
+          sleep 99999
+          pytest -sv tests/e2e/310p/singlecard/test_offline_inference.py
 
 
+  e2e-4-cards:
+    # 310p-test will be triggered when tag '310p-test' & 'ready-for-test' or schedule job
+    if: >- 
+      ${{ 
+        (contains(github.event.pull_request.labels.*.name, '310p-test'))  && 
+        contains(github.event.pull_request.labels.*.name, 'ready-for-test') || 
+        github.event_name == 'schedule' || github.event_name == 'push' 
+        }}
+    strategy:
+      max-parallel: 2
+      matrix:
+        os: [linux-aarch64-310p-4]
+        vllm_version: [main, v0.9.2]
+    name: multicard 310p e2e test
+    runs-on: ${{ matrix.os }}
+    container:
+      # TODO(yikun): Remove m.daocloud.io prefix when infra proxy ready
+      image: m.daocloud.io/quay.io/ascend/cann:8.1.rc1-310p-ubuntu22.04-py3.10
+      env:
+        VLLM_LOGGING_LEVEL: ERROR
+        VLLM_USE_MODELSCOPE: True
+    steps:
+      - name: Check npu and CANN info
+        run: |
+          npu-smi info
+          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
+
+      - name: Config mirrors
+        run: |
+          sed -i 's|ports.ubuntu.com|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+          pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+          apt-get update -y
+          apt install git -y
+          git config --global url."https://gh-proxy.test.osinfra.cn/https://github.com/".insteadOf https://github.com/
+          
+      - name: Checkout vllm-project/vllm repo
+        uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm
+          ref: ${{ matrix.vllm_version }}
+          path: ./vllm-empty
+          
+      - name: Checkout vllm-project/vllm-ascend repo
+        uses: actions/checkout@v4
+        with:
+          repository: vllm-project/vllm-ascend
+          path: ./vllm-ascend
+
+      - name: Install system dependencies
+        run: |
+          apt-get -y install `cat packages.txt`
+          apt-get -y install git vim wget net-tools gcc g++ cmake libnuma-dev curl gnupg2
 
       - name: Install vllm-project/vllm from source
         working-directory: ./vllm-empty
