@@ -62,7 +62,7 @@ jobs:
       env:
         VLLM_LOGGING_LEVEL: ERROR
         VLLM_USE_MODELSCOPE: True
-    steps:
+    steps:        
       - name: Check npu and CANN info
         run: |
           npu-smi info
@@ -92,7 +92,7 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get -y install `cat packages.txt`
-          apt-get -y install gcc g++ cmake libnuma-dev net-tools
+          apt-get -y install git vim wget net-tools gcc g++ cmake libnuma-dev curl gnupg2
 
 
 
