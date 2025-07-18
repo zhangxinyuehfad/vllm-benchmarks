@@ -106,8 +106,11 @@ jobs:
         env:
           PIP_EXTRA_INDEX_URL: https://mirrors.huaweicloud.com/ascend/repos/pypi
         run: |
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/Ascend/ascend-toolkit/latest/x86_64-linux/devlib
+          export SOC_VERSION=ASCEND310P3 
           pip install -r requirements-dev.txt
           pip install -v -e .
+          pip install cache purge
 
       - name: Run e2e test
         env:
