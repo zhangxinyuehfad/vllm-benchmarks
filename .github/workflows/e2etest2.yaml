@@ -98,6 +98,7 @@ jobs:
           VLLM_USE_V1: 1
           VLLM_WORKER_MULTIPROC_METHOD: spawn
           VLLM_USE_MODELSCOPE: True
+          MODELSCOPE_CACHE: /home/root/modelscope
         run: |
           # pytest -sv tests/e2e/singlecard/test_offline_inference.py
           # pytest -sv tests/e2e/singlecard/test_ilama_lora.py
