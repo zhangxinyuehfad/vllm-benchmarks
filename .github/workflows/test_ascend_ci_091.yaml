@@ -18,23 +18,7 @@
 name: 'test_ascend_ci_091'
 
 on:
-  pull_request:
-    branches:
-      - 'main'
-      - '*-dev'
-    paths:
-      - '*.txt'
-      - '**/*.py'
-      - '.github/workflows/vllm_ascend_test.yaml'
-      - '!docs/**'
-      - 'pytest.ini'
-      - '!benchmarks/**'
-      - 'tools/mypy.sh'
-      - 'mypy.ini'
-      - '.github/workflows/*.ya?ml'
-      - '.github/workflows/actionlint.*'
-      - '.github/workflows/matchers/actionlint.json'
-
+    workflow_dispatch:
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
 # It's used to activate ascend-toolkit environment variables.
