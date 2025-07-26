@@ -45,6 +45,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install modelscope
+          pip install filelock
 
       - name: Download from modelscope (manual trigger)
         if: github.event_name == 'workflow_dispatch'
