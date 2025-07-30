@@ -229,8 +229,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          repository: vllm-ascend-ci/vllm-ascend
-          token: ${{ secrets.PAT_TOKEN }}
+          repository: wxsIcey/wxs-vllm-ascend
           ref: main
 
       - name: Add upstream remote
