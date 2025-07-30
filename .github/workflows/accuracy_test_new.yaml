@@ -229,7 +229,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          repository: wxsIcey/wxs-vllm-ascend
+          repository: wxsIcey/vllm-benchmarks
           token: ${{ secrets.WXS_TOKEN }}
           ref: main
 
@@ -294,9 +294,9 @@ jobs:
           github-token: ${{ secrets.WXS_TOKEN }}
           script: |
             const pr = await github.rest.pulls.create({
-              owner: 'vllm-project',
-              repo: 'vllm-ascend',
-              head: `vllm-ascend-ci:${{ env.BRANCH_NAME }}`,
+              owner: 'nv-action',
+              repo: 'vllm-benchmarks',
+              head: `wxsIcey:${{ env.BRANCH_NAME }}`,
               base: '${{ github.event.inputs.vllm-ascend-version }}',
               title: `[Doc] Update accuracy reports for ${{ github.event.inputs.vllm-ascend-version }}`,
               body: `The accuracy results running on NPU Altlas A2 have changed, updating reports for: ${{ needs.accuracy_tests.outputs.model_name }}
