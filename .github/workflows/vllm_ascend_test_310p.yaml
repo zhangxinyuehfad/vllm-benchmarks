@@ -112,6 +112,7 @@ jobs:
           VLLM_TARGET_DEVICE=empty pip install -e .
 
       - name: Install vllm-project/vllm-ascend
+        working-directory: ./vllm-ascend
         run: |
           export PIP_EXTRA_INDEX_URL=https://mirrors.huaweicloud.com/ascend/repos/pypi
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/Ascend/ascend-toolkit/latest/x86_64-linux/devlib
