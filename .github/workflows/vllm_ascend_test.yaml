@@ -52,5 +52,5 @@ jobs:
           #   npu-smi info
           # fi
           npu-smi info
-          sleep 3600
+          # sleep 3600
     
