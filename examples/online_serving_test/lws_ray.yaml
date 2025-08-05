@@ -1,0 +1,110 @@
+# hostname rule: https://github.com/kubernetes-sigs/lws/blob/v0.6.2/api/leaderworkerset/v1/leaderworkerset_types.go
+apiVersion: leaderworkerset.x-k8s.io/v1
+kind: LeaderWorkerSet
+metadata:
+  name: vllm-ray
+spec:
+  replicas: 1
+  leaderWorkerTemplate:
+    size: 2
+    restartPolicy: RecreateGroupOnPodRestart
+    leaderTemplate:
+      metadata:
+        labels:
+          role: leader
+      spec:
+        containers:
+          - name: vllm-leader
+            image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/vllm-ascend:main-a3
+            env:
+              - name: VLLM_USE_MODELSCOPE
+                value: "true"
+              - name: GLOO_SOCKET_IFNAME
+                value: "eth0"
+              - name: TP_SOCKET_IFNAME
+                value: "eth0"
+              - name: ASCEND_RT_VISIBLE_DEVICES
+                value: "0,1,2,3,4,5,6,7"
+              - name: RAY_EXPERIMENTAL_NOSET_ASCEND_RT_VISIBLE_DEVICES
+                value: "1"
+            command:
+              - /bin/bash
+              - -c
+                - "bash /vllm-workspace/examples/online_serving/multi-node-serving.sh leader --ray_cluster_size=$(LWS_GROUP_SIZE); 
+                  vllm serve --port 8080 --model vllm-ascend/DeepSeek-V3-W8A8 --tensor-parallel-size 8 --pipeline_parallel_size 2"
+            resources:
+              limits:
+                huawei.com/ascend-1980: "2"
+                memory: 128Gi
+                cpu: 46
+              requests:
+                huawei.com/ascend-1980: "2"
+                cpu: 46
+                memory: 128Gi
+            ports:
+              - containerPort: 8080
+            volumeMounts:
+              - name: shared-volume
+                mountPath: /root/.cache
+        volumes:
+          - name: shared-volume
+            persistentVolumeClaim:
+              claimName: nv-action-vllm-benchmarks-v2
+    workerTemplate:
+      metadata:
+        labels:
+          role: worker
+      spec:
+        containers:
+          - name: vllm-worker
+            image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/vllm-ascend:main-a3
+            env:
+              - name: VLLM_USE_MODELSCOPE
+                value: "true"
+              - name: HCCL_IF_IP
+                value: $LWS_WORKER_ADDRESS
+              - name: GLOO_SOCKET_IFNAME
+                value: "eth0"
+              - name: TP_SOCKET_IFNAME
+                value: "eth0"
+              - name: ASCEND_RT_VISIBLE_DEVICES
+                value: "0,1,2,3,4,5,6,7"
+              - name: RAY_EXPERIMENTAL_NOSET_ASCEND_RT_VISIBLE_DEVICES
+                value: "1"
+            command:
+              - /bin/bash
+              - -c
+              - "bash /vllm-workspace/examples/online_serving/multi-node-serving.sh worker --ray_address=$(LWS_LEADER_ADDRESS)"
+            resources:
+              limits:
+                huawei.com/ascend-1980: "8"
+                memory: 128Gi
+                cpu: 46
+              requests:
+                huawei.com/ascend-1980: "8"
+                cpu: 46
+                memory: 128Gi
+            ports:
+              - containerPort: 8080
+            volumeMounts:
+              - name: shared-volume
+                mountPath: /root/.cache
+        volumes:
+          - name: shared-volume
+            persistentVolumeClaim:
+              claimName: nv-action-vllm-benchmarks-v2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-leader
+spec:
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    leaderworkerset.sigs.k8s.io/name: vllm
+    role: leader
+  type: ClusterIP
