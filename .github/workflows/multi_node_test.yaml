@@ -1,0 +1,35 @@
+name: 'Multi Node vLLM Ascend Test'
+# This workflow runs nightly benchmarks for vllm-ascend.
+
+on:
+    workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -el {0}
+
+jobs:
+  test:
+    name: Test ray backend with vLLM Ascend
+    runs-on: 'linux-aarch64-a2-0'
+    container:
+      image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1-910b-ubuntu22.04-py3.11
+      volumes:
+        - /usr/local/dcmi:/usr/local/dcmi
+        - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
+        - /usr/local/Ascend/driver/:/usr/local/Ascend/driver/
+        - /home/action/.cache:/github/home/.cache/
+      options: >-
+        --device /dev/davinci0
+        --device /dev/davinci1
+        --device /dev/davinci_manager
+        --device /dev/devmm_svm
+        --device /dev/hisi_hdc
+      env:
+        HF_ENDPOINT: https://hf-mirror.com
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - name: Check npu and CANN info
+        run: |
+          npu-smi info
+          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
