@@ -2,8 +2,6 @@ name: 'Multi Node vLLM Ascend Test'
 # This workflow runs nightly benchmarks for vllm-ascend.
 
 on:
-#   schedule:
-#     - cron: "0 12 * * *"
     workflow_dispatch:
 
 defaults:
