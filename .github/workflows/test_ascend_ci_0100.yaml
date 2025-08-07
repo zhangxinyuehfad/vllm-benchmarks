@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: vllm-project/vllm-ascend
-          ref: v0.10.0
+          ref: v0.10.0rc1
           path: ./
 
       - name: Install system dependencies
