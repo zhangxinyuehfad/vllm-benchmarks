@@ -30,7 +30,7 @@ jobs:
   e2e:
     strategy:
       matrix:
-        os: [linux-aarch64-910c-1]
+        os: [linux-aarch64-910c-1, linux-aarch64-910c-2]
         vllm_version: [v0.10.0]
     name: vLLM Ascend test
     runs-on: ${{ matrix.os }}
