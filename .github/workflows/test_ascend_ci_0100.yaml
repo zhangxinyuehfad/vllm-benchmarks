@@ -30,13 +30,13 @@ jobs:
   e2e:
     strategy:
       matrix:
-        os: [linux-aarch64-910c-1, linux-aarch64-910c-4]
+        os: [linux-aarch64-910c-1, linux-aarch64-910c-2]
         vllm_version: [v0.10.0]
     name: vLLM Ascend test
     runs-on: ${{ matrix.os }}
     container:
       # TODO(yikun): Remove m.daocloud.io prefix when infra proxy ready
-      image: quay.io/ascend/cann:8.2.rc1-910b-ubuntu22.04-py3.11
+      image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1-910b-ubuntu22.04-py3.11
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -60,7 +60,7 @@ jobs:
         with:
           repository: vllm-project/vllm-ascend
           ref: v0.10.0rc1
-          path: ./
+          path: ./vllm-ascend
 
       - name: Install system dependencies
         run: |
@@ -80,13 +80,15 @@ jobs:
           VLLM_TARGET_DEVICE=empty pip install -e .
 
       - name: Install vllm-project/vllm-ascend
-        env:
-          PIP_EXTRA_INDEX_URL: https://mirrors.huaweicloud.com/ascend/repos/pypi
+        working-directory: ./vllm-ascend
         run: |
+          export PIP_EXTRA_INDEX_URL=https://mirrors.huaweicloud.com/ascend/repos/pypi
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/Ascend/ascend-toolkit/latest/x86_64-linux/devlib
           pip install -r requirements-dev.txt
           pip install -v -e .
 
       - name: Run vllm-project/vllm-ascend test for V1 Engine
+        working-directory: ./vllm-ascend
         env:
           VLLM_WORKER_MULTIPROC_METHOD: spawn
           VLLM_USE_MODELSCOPE: True
