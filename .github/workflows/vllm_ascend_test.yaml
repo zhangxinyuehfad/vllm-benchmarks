@@ -34,7 +34,8 @@ jobs:
         # os: [linux-aarch64-a2-0, linux-aarch64-a2-1, linux-aarch64-a2-2, linux-aarch64-a2-4, linux-aarch64-a2-8]
         # os: [linux-aarch64-910c-1, linux-aarch64-910c-2, linux-aarch64-910c-4]
         # os: [linux-aarch64-a2-1]
-        os: [linux-aarch64-910c-1, linux-aarch64-910c-2, linux-aarch64-910c-4]
+        # os: [linux-aarch64-910c-1, linux-aarch64-910c-2, linux-aarch64-910c-4]
+        os: [linux-aarch64-a3-2, linux-aarch64-a3-4, linux-aarch64-a3-8, linux-aarch64-a3-16]
         ## 测试 aicc 集群
         # os: [aicc-linux-arm64-npu-1, aicc-linux-arm64-npu-4]
     name: vLLM Ascend test
@@ -42,15 +43,23 @@ jobs:
     container:
       image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.1.rc1-910b-ubuntu22.04-py3.10
     steps:
-      
-      - name: npu-smi info
+      - name: Check npu and CANN info
         run: |
-          # if [[ "${{ matrix.os }}" == "linux-arm64-npu-0" ]]; then
-          # if [[ "${{ matrix.os }}" == "linux-aarch64-a2-0" ]]; then
-          #   echo "hello"
-          # else
-          #   npu-smi info
-          # fi
           npu-smi info
-          # sleep 3600
+          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
+
+      - name: Config mirrors
+        run: |
+          sed -Ei 's@(ports|archive).ubuntu.com@cache-service.nginx-pypi-cache.svc.cluster.local:8081@g' /etc/apt/sources.list
+          pip config set global.index-url http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple
+          pip config set global.trusted-host cache-service.nginx-pypi-cache.svc.cluster.local
+          apt-get update -y
+          apt install git -y
+
+      - name: Checkout vllm-project/vllm-ascend repo
+        uses: actions/checkout@v4
+        with:
+          repository: Potabk/vllm-ascend
+          ref: ci_opt
+          path: ./
     
