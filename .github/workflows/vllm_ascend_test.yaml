@@ -50,16 +50,17 @@ jobs:
 
       - name: Config mirrors
         run: |
-          sed -Ei 's@(ports|archive).ubuntu.com@cache-service.nginx-pypi-cache.svc.cluster.local:8081@g' /etc/apt/sources.list
-          pip config set global.index-url http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple
-          pip config set global.trusted-host cache-service.nginx-pypi-cache.svc.cluster.local
-          apt-get update -y
-          apt install git -y
+          sleep 3600
+      #     sed -Ei 's@(ports|archive).ubuntu.com@cache-service.nginx-pypi-cache.svc.cluster.local:8081@g' /etc/apt/sources.list
+      #     pip config set global.index-url http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple
+      #     pip config set global.trusted-host cache-service.nginx-pypi-cache.svc.cluster.local
+      #     apt-get update -y
+      #     apt install git -y
 
-      - name: Checkout vllm-project/vllm-ascend repo
-        uses: actions/checkout@v4
-        with:
-          repository: Potabk/vllm-ascend
-          ref: ci_opt
-          path: ./
+      # - name: Checkout vllm-project/vllm-ascend repo
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: Potabk/vllm-ascend
+      #     ref: ci_opt
+      #     path: ./
     
