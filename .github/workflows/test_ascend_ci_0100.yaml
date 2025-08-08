@@ -30,17 +30,19 @@ jobs:
   e2e:
     strategy:
       matrix:
-        os: [linux-aarch64-a2-1]
+        os: [linux-aarch64-910c-1, linux-aarch64-910c-2]
         vllm_version: [v0.10.0]
     name: vLLM Ascend test
     runs-on: ${{ matrix.os }}
     container:
       # TODO(yikun): Remove m.daocloud.io prefix when infra proxy ready
-      image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1-910b-ubuntu22.04-py3.11
+      image: quay.io/ascend/cann:8.2.rc1-a3-ubuntu22.04-py3.11
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
         VLLM_LOGGING_LEVEL: ERROR
+        DEBIAN_FRONTEND: noninteractive
+        COMPILE_CUSTOM_KERNELS: 1
     steps:
       - name: Check npu and CANN info
         run: |
@@ -78,6 +80,7 @@ jobs:
         working-directory: ./vllm-empty
         run: |
           VLLM_TARGET_DEVICE=empty pip install -e .
+          python3 -m pip uninstall -y triton && \
 
       - name: Install vllm-project/vllm-ascend
         working-directory: ./vllm-ascend
