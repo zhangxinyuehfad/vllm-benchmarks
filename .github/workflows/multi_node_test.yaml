@@ -34,7 +34,6 @@ defaults:
   run:
     shell: bash -el {0}
 
-
 jobs:
   test_dp:
     # Currently, we run multi-node tests only on: vllm==main, vllm-ascend==main.
@@ -51,8 +50,8 @@ jobs:
       - name: Checkout vllm-ascend
         uses: actions/checkout@v4
         with:
-          respository: vllm-project/vllm-ascend
-          ref: main
+          repository: Potabk/vllm-ascend
+          ref: multi_node_ci
           path: ./
 
       - name: Checkout vllm
@@ -68,7 +67,16 @@ jobs:
 
       - name: Run multi-node test
         run: |
-          bash ./.github/workflows/scripts/docker_exec.sh ls
+          docker exec -it ascend_ci_a3 bash
+          source /root/actions-runner/.cache/set_env.sh
+          # install vllm
+          cd ${GITHUB_WORKSPACE}/vllm-empty
+          VLLM_TARGET_DEVICE=empty pip install -e .
+          # install vllm-ascend
+          cd ${GITHUB_WORKSPACE}/
+          pip install -e .
+          # run test
+          cd ${GITHUB_WORKSPACE}/tests
 
       # - name: Install vllm-project/vllm from source
       #   working-directory: ./vllm-empty
