@@ -64,11 +64,11 @@ jobs:
       
       - name: Start container
         run: |
-          bash ./scripts/start_container.sh
+          bash ./.github/workflows/scripts/start_container.sh
 
       - name: Run multi-node test
         run: |
-          bash ./scripts/docker_exec.sh ls
+          bash ./.github/workflows/scripts/docker_exec.sh ls
 
       # - name: Install vllm-project/vllm from source
       #   working-directory: ./vllm-empty
