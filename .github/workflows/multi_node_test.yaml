@@ -41,12 +41,39 @@ jobs:
     name: 'Multi-Node-Test / DP'
     strategy:
         matrix:
-          runner: [liteserver-for-vllm-ascend-00001]
+          runner: [linux-aarch64-a3-node0]
     runs-on: ${{matrix.runner}}
     container:
       image: quay.nju.edu.cn/ascend/cann:8.2.rc1-a3-ubuntu22.04-py3.11
       volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
+        - /usr/local/dcmi:/usr/local/dcmi
+        - /usr/local/Ascend/driver/tools/hccn_tool:/usr/local/Ascend/driver/tools/hccn_tool
+        - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
+        - /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/
+        - /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info
+        - /etc/ascend_install.info:/etc/ascend_install.info
+        - /mnt/sfs_turbo/ascend-ci-share-nv-action-vllm-benchmarks:/root/.cache
+      options: >-
+        --net=host
+        --device /dev/davinci0
+        --device /dev/davinci1
+        --device /dev/davinci2
+        --device /dev/davinci3
+        --device /dev/davinci4
+        --device /dev/davinci5
+        --device /dev/davinci6
+        --device /dev/davinci7
+        --device /dev/davinci8
+        --device /dev/davinci9
+        --device /dev/davinci10
+        --device /dev/davinci11
+        --device /dev/davinci12
+        --device /dev/davinci13
+        --device /dev/davinci14
+        --device /dev/davinci15
+        --device /dev/davinci_manager
+        --device /dev/devmm_svm
+        --device /dev/hisi_hdc
     steps:
       - name: Check npu and CANN info
         run: |
