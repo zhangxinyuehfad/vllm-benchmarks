@@ -68,7 +68,7 @@ jobs:
         run: |
           docker exec -i $CONTAINER_NAME bash -lc "
           source '$ENV_FILE'
-          bash ./.github/workflows/scripts/install_and_test.sh"
+          bash /root/workspace/.github/workflows/scripts/install_and_test.sh"
 
           if [ $? -ne 0 ]; then
             echo "Failed to execute command in the container. Please check if the container is running."
