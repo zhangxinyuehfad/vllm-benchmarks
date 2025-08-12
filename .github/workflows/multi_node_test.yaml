@@ -59,11 +59,6 @@ jobs:
           repository: vllm-project/vllm
           ref: main
           path: ./vllm-empty
-      
-      - name: env check
-        run: |
-          echo "github workspace: $GITHUB_WORKSPACE"
-          pwd
 
       - name: Start container
         run: |
@@ -71,6 +66,7 @@ jobs:
 
       - name: Run multi-node test
         run: |
+          sleep 1000
           docker exec -i $CONTAINER_NAME bash -lc "
           source '$ENV_FILE'
           bash /root/workspace/.github/workflows/scripts/install_and_test.sh"
