@@ -40,7 +40,7 @@ jobs:
     runs-on: ${{matrix.runner}}
     env:
       CONTAINER_NAME: ascend_ci_a3
-      ENV_DIR: /root/actions-runner/.cache/set_env.sh
+      ENV_FILE: /root/actions-runner/.cache/set_env.sh
     steps:
       - name: Check npu and CANN info
         run: |
@@ -65,18 +65,18 @@ jobs:
           bash ./.github/workflows/scripts/start_container.sh
 
       - name: Run multi-node test
-        env:
-          ENV_FILE: /root/actions-runner/.cache/set_env.sh
         run: |
           docker exec -i $CONTAINER_NAME bash -lc "
           source '$ENV_FILE'
-          exec bash"
-          # check env
-          echo "Environment variables:"
-          echo $HCCL_IF_IP
-          echo $GLOO_SOCKET_IFNAME
+          bash ./.github/workflows/scripts/install_and_test.sh"
+
+          if [ $? -ne 0 ]; then
+            echo "Failed to execute command in the container. Please check if the container is running."
+            exit 1
+          fi
 
       - name: Docker post test cleanup
+        if: always()
         run: |
           docker rm -f ascend_ci_a3 2>/dev/null || true
 
