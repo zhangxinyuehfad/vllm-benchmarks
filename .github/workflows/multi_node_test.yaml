@@ -36,7 +36,7 @@ jobs:
     name: 'Multi-Node-Test / DP'
     strategy:
         matrix:
-          runner: [linux-aarch64-a3-node0]
+          runner: [linux-aarch64-a3-node0, linux-aarch64-a3-node1]
     runs-on: ${{matrix.runner}}
     env:
       CONTAINER_NAME: ascend_ci_a3
@@ -64,11 +64,28 @@ jobs:
         run: |
           bash ./.github/workflows/scripts/start_container.sh
 
-      - name: Run multi-node test
+      - name: Get header node IP
+        id: get_header_node_ip
+        if: ${{ matrix.runner == 'linux-aarch64-a3-node0' }}
         run: |
-          docker exec -i $CONTAINER_NAME bash -lc "
-          source '$ENV_FILE'
-          bash /root/workspace/.github/workflows/scripts/install_and_test.sh"
+          echo "header_node_ip=$(hostname -I)" >> $GITHUB_ENV
+          echo "Header node IP: $header_node_ip"
+
+      - name: verify
+        run: |
+          echo "Header node IP: ${{ env.header_node_ip }}"
+
+      - name: Run head node
+        run: |
+          if [ "${matrix.runner}" == "linux-aarch64-a3-node0" ]; then
+            docker exec -i $CONTAINER_NAME bash -lc "
+            source '$ENV_FILE'
+            bash /root/workspace/.github/workflows/scripts/install_and_test.sh head"
+          else
+            docker exec -i $CONTAINER_NAME bash -lc "
+            source '$ENV_FILE'
+            bash /root/workspace/.github/workflows/scripts/install_and_test.sh worker"
+          fi
 
           if [ $? -ne 0 ]; then
             echo "Failed to execute command in the container. Please check if the container is running."
