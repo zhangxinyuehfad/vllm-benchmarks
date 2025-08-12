@@ -64,6 +64,11 @@ jobs:
       - name: Run multi-node test
         run: |
           bash ./.github/workflows/scripts/install_and_test.sh
+      
+
+      - name: Docker post test cleanup
+        run: |
+          docker rm -f ascend_ci_a3 2>/dev/null || true
 
       # - name: Install vllm-project/vllm from source
       #   working-directory: ./vllm-empty
