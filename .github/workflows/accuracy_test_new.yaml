@@ -21,9 +21,9 @@
 name: Benchmarks / accuracy / new
 
 on:
-  schedule:
+  # schedule:
     # Runs every 6 hours
-    - cron:  '0 */6 * * *'
+    # - cron:  '0 */6 * * *'
   pull_request:
     types: [ labeled ]
   workflow_dispatch:
