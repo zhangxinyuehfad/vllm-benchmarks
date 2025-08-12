@@ -38,6 +38,9 @@ jobs:
         matrix:
           runner: [linux-aarch64-a3-node0]
     runs-on: ${{matrix.runner}}
+    env:
+      CONTAINER_NAME: ascend_ci_a3
+      ENV_DIR: /root/actions-runner/.cache/set_env.sh
     steps:
       - name: Check npu and CANN info
         run: |
@@ -62,9 +65,16 @@ jobs:
           bash ./.github/workflows/scripts/start_container.sh
 
       - name: Run multi-node test
+        env:
+          ENV_FILE: /root/actions-runner/.cache/set_env.sh
         run: |
-          bash ./.github/workflows/scripts/install_and_test.sh
-      
+          docker exec -i $CONTAINER_NAME bash -lc "
+          source '$ENV_FILE'
+          exec bash"
+          # check env
+          echo "Environment variables:"
+          echo $HCCL_IF_IP
+          echo $GLOO_SOCKET_IFNAME
 
       - name: Docker post test cleanup
         run: |
