@@ -63,16 +63,7 @@ jobs:
 
       - name: Run multi-node test
         run: |
-          docker exec -it ascend_ci_a3 bash
-          source /root/actions-runner/.cache/set_env.sh
-          # install vllm
-          cd ${GITHUB_WORKSPACE}/vllm-empty
-          VLLM_TARGET_DEVICE=empty pip install -e .
-          # install vllm-ascend
-          cd ${GITHUB_WORKSPACE}/
-          pip install -e .
-          # run test
-          cd ${GITHUB_WORKSPACE}/tests
+          bash ./.github/workflows/scripts/install_and_test.sh
 
       # - name: Install vllm-project/vllm from source
       #   working-directory: ./vllm-empty
