@@ -82,54 +82,74 @@ jobs:
       - name: Prepare matrix
         id: set_matrix
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           event="${GITHUB_EVENT_NAME}"
-          
           matrix="[]"
-          
+
           if [[ "$event" == "schedule" ]]; then
             matrix=$(echo "$MAPPINGS_JSON" | jq '[to_entries[] | {model_name: .key, runner: .value}]')
           else
             base="${GITHUB_BASE_REF}"
             head="${GITHUB_HEAD_REF}"
-            
-            if [[ -z "$base" || -z "$head" ]]; then
-              echo "Base or head ref not found, skipping diff."
-            else
-              changed_files=$(git diff --diff-filter=AM --name-only "origin/$base...origin/$head" || true)
-              run_all=false
-              
-              for f in $changed_files; do
-                if [[ "$f" != tests/e2e/singlecard/models/configs/* ]]; then
-                  echo "Non-config file changed: $f, will run all models"
-                  run_all=true
-                  break
-                fi
-              done
 
-              if [[ "$run_all" == "true" ]]; then
-                matrix=$(echo "$MAPPINGS_JSON" | jq '[to_entries[] | {model_name: .key, runner: .value}]')
+            pr_number=$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH" || true)
+
+            changed_files=""
+            if [[ -n "$pr_number" ]]; then
+              echo "PR detected: #$pr_number — fetching changed files via API"
+              changed_files=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pulls/$pr_number/files?per_page=100" \
+                | jq -r '.[].filename' || true)
+            else
+              if [[ -z "$base" || -z "$head" ]]; then
+                echo "Base or head ref not found, skipping diff."
               else
-                for f in $changed_files; do
-                  if [[ "$f" == tests/e2e/singlecard/models/configs/*.yaml ]]; then
-                    name=$(basename "$f" .yaml)
-                    runner=$(echo "$MAPPINGS_JSON" | jq -r --arg key "$name" '.[$key] // empty')
-                    
-                    if [[ -n "$runner" ]]; then
-                      matrix=$(echo "$matrix" | jq --arg model "$name" --arg runner "$runner" '. += [{"model_name":$model, "runner":$runner}]')
-                    fi
-                  fi
-                done
+                echo "Using git diff between origin/$base and origin/$head"
+                # ensure refs exist — fetch base and head as best effort
+                git fetch --no-tags --prune --depth=1 origin "$base" || true
+                git fetch --no-tags --prune --depth=1 origin "$head" || true
+                changed_files=$(git diff --diff-filter=AM --name-only "origin/$base...origin/$head" || true)
               fi
             fi
+
+            echo "Changed files:"
+            echo "$changed_files"
+
+            run_all=false
+
+            for f in $changed_files; do
+              if [[ "$f" != tests/e2e/singlecard/models/configs/* ]]; then
+                echo "Non-config file changed: $f, will run all models"
+                run_all=true
+                break
+              fi
+            done
+
+            if [[ "$run_all" == "true" ]]; then
+              matrix=$(echo "$MAPPINGS_JSON" | jq '[to_entries[] | {model_name: .key, runner: .value}]')
+            else
+              for f in $changed_files; do
+                if [[ "$f" == tests/e2e/singlecard/models/configs/*.yaml ]]; then
+                  name=$(basename "$f" .yaml)
+                  runner=$(echo "$MAPPINGS_JSON" | jq -r --arg key "$name" '.[$key] // empty')
+                  if [[ -n "$runner" ]]; then
+                    matrix=$(echo "$matrix" | jq --arg model "$name" --arg runner "$runner" '. += [{"model_name":$model, "runner":$runner}]')
+                  else
+                    echo "Config $name not found in mappings; skipping."
+                  fi
+                fi
+              done
+            fi
           fi
-          
+
           echo "Generated matrix (raw): $matrix"
-          
           compact_matrix=$(echo "$matrix" | jq -c 'if type=="array" then . else [] end')
           echo "matrix=$compact_matrix" >> $GITHUB_OUTPUT
-          echo "Final matrix output: $compact_matrix" 
+          echo "Final matrix output: $compact_matrix"
+
 
   accuracy_tests:
     needs: prepare_matrix
