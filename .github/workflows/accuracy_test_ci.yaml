@@ -92,28 +92,13 @@ jobs:
           if [[ "$event" == "schedule" ]]; then
             matrix=$(echo "$MAPPINGS_JSON" | jq '[to_entries[] | {model_name: .key, runner: .value}]')
           else
-            base="${GITHUB_BASE_REF}"
-            head="${GITHUB_HEAD_REF}"
-
             pr_number=$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH" || true)
 
             changed_files=""
-            if [[ -n "$pr_number" ]]; then
-              echo "PR detected: #$pr_number — fetching changed files via API"
-              changed_files=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pulls/$pr_number/files?per_page=100" \
-                | jq -r '.[].filename' || true)
-            else
-              if [[ -z "$base" || -z "$head" ]]; then
-                echo "Base or head ref not found, skipping diff."
-              else
-                echo "Using git diff between origin/$base and origin/$head"
-                # ensure refs exist — fetch base and head as best effort
-                git fetch --no-tags --prune --depth=1 origin "$base" || true
-                git fetch --no-tags --prune --depth=1 origin "$head" || true
-                changed_files=$(git diff --diff-filter=AM --name-only "origin/$base...origin/$head" || true)
-              fi
-            fi
+            echo "PR detected: #$pr_number — fetching changed files via API"
+            changed_files=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pulls/$pr_number/files?per_page=100" \
+              | jq -r '.[].filename' || true)
 
             echo "Changed files:"
             echo "$changed_files"
