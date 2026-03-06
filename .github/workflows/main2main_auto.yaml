@@ -133,16 +133,12 @@ jobs:
             OLD_COMMIT=${{ steps.detect.outputs.old_commit }}
             NEW_COMMIT=${{ steps.detect.outputs.new_commit }}
 
-            Follow the main2main skill instructions to:
+            Please use `.agents/skills/main2main/SKILL.md`.
             1. Analyze vLLM changes between OLD_COMMIT and NEW_COMMIT using GitHub API
             2. Apply P0/P1 adaptation fixes with vllm_version_is() guards
             3. Update all commit hash references from OLD_COMMIT to NEW_COMMIT
             4. Commit all changes (do NOT create a PR)
-          claude_args: >
-            --append-system-prompt-file .agents/skills/main2main/SKILL.md
-            --max-turns 30
-            --max-budget-usd 10.00
-            --allowedTools "Bash(git *),Bash(gh *),Bash(grep *),Bash(sed *),Bash(python3 *),Read,Write,Edit,Glob,Grep"
+          claude_args: "--max-turns 30 --max-budget-usd 10.00 --allowedTools 'Bash(git *),Bash(gh *),Bash(grep *),Bash(sed *),Bash(python3 *),Read,Write,Edit,Glob,Grep'"
         env:
           MAIN2MAIN_CI_MODE: "true"
 
@@ -207,6 +203,9 @@ jobs:
         run: |
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
 
       - name: Phase 2 — test and fix loop
         id: loop
@@ -351,6 +350,7 @@ jobs:
           echo "bisect_run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
 
       - name: Download bisect results
+        id: download-bisect
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
@@ -358,11 +358,14 @@ jobs:
             --repo "${{ env.UPSTREAM_REPO }}" \
             --name bisect-summary \
             --dir /tmp/bisect_results || echo "No bisect-summary artifact"
+          if [[ -f /tmp/bisect_results/bisect_summary.md ]]; then
+            echo "has_results=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Apply targeted fixes
         id: fix
         uses: anthropics/claude-code-action@v1
-        if: hashFiles('/tmp/bisect_results/bisect_summary.md') != ''
+        if: steps.download-bisect.outputs.has_results == 'true'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
@@ -373,11 +376,7 @@ jobs:
             1. Fetch the culprit commit's diff via gh api
             2. Generate a targeted vllm-ascend fix with vllm_version_is() guard
             3. Commit each fix separately (do NOT push)
-          claude_args: >
-            --append-system-prompt-file .agents/skills/main2main/SKILL.md
-            --max-turns 25
-            --max-budget-usd 5.00
-            --allowedTools "Bash(git *),Bash(gh *),Bash(grep *),Bash(sed *),Read,Write,Edit,Glob,Grep"
+          claude_args: "--append-system-prompt-file .agents/skills/main2main/SKILL.md --max-turns 25 --max-budget-usd 5.00 --allowedTools 'Bash(git *),Bash(gh *),Bash(grep *),Bash(sed *),Read,Write,Edit,Glob,Grep'"
         env:
           MAIN2MAIN_CI_MODE: "true"
 
