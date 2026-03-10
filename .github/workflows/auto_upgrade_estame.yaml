@@ -51,6 +51,8 @@ jobs:
           Buffer ratio: 1.1x median, rounded to the nearest 10 s."
           git checkout -b ${{ env.BRANCH_NAME }}
           git remote add ${{ env.FORK_OWNER }} https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ env.FORK_OWNER }}/vllm-benchmarks.git
+          git remote -v
+          git log
           git push -f ${{ env.FORK_OWNER }} ${{ env.BRANCH_NAME }}:${{ env.BRANCH_NAME }}
           gh pr create \
             --repo ${{ env.UPSTREAM_REPO }} \
