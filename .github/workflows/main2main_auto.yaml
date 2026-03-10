@@ -18,9 +18,6 @@
 name: Main2Main Auto
 
 on:
-  schedule:
-    # Daily at UTC 02:00 (UTC+8 10:00)
-    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       target_commit:
