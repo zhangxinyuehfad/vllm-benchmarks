@@ -35,7 +35,7 @@ jobs:
 
       - name: Update config.yaml from timing data
         run: |
-          echo "Collecting timing data artifacts..." > timing_data.log
+          echo "Collecting timing data artifacts..." > timing_data.txt
           git status
 
       - name: Create pull request
