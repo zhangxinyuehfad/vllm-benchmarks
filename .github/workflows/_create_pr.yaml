@@ -1,0 +1,308 @@
+#
+# Copyright (c) 2025 Huawei Technologies Co., Ltd. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# This file is a part of the vllm-ascend project.
+#
+
+# Reusable workflow: Create a Pull Request across repos/forks.
+#
+# Usage (caller workflow):
+#
+#   jobs:
+#     open-pr:
+#       uses: ./.github/workflows/_create_pr.yaml
+#       with:
+#         pr_title: "[CI] My automated PR"
+#         target_repo: "org/target-repo"
+#         target_branch: "main"
+#         source_owner: "my-fork-owner"
+#         source_branch: "feature/my-branch"
+#         pr_body: |
+#           ## Summary
+#           Automated PR created by CI pipeline.
+#         labels: "automated,ci"
+#         draft: false
+#         allow_duplicate: false
+#       secrets:
+#         gh_token: ${{ secrets.PAT_TOKEN }}
+#
+# Outputs:
+#   pr_number  – number of the created (or existing) PR
+#   pr_url     – full URL of the PR
+#   skipped    – "true" when a duplicate PR was found and allow_duplicate=false
+
+name: Create PR (Reusable)
+
+on:
+  # ── Reusable (called from other workflows) ──────────────────────────
+  workflow_call:
+    inputs:
+      pr_title:
+        description: 'PR title'
+        required: true
+        type: string
+
+      target_repo:
+        description: 'Target repository in "owner/repo" format'
+        required: true
+        type: string
+
+      target_branch:
+        description: 'Target branch (base branch of the PR)'
+        required: true
+        type: string
+
+      source_owner:
+        description: 'Owner of the source fork / head repo'
+        required: true
+        type: string
+
+      source_branch:
+        description: 'Source branch (head branch of the PR)'
+        required: true
+        type: string
+
+      pr_body:
+        description: 'PR description / body (Markdown)'
+        required: false
+        type: string
+        default: ''
+
+      draft:
+        description: 'Open the PR as a draft'
+        required: false
+        type: boolean
+        default: false
+
+      labels:
+        description: 'Comma-separated list of labels to apply after creation'
+        required: false
+        type: string
+        default: ''
+
+      assignees:
+        description: 'Comma-separated list of GitHub usernames to assign'
+        required: false
+        type: string
+        default: ''
+
+      allow_duplicate:
+        description: |
+          When false (default), skip PR creation if an open PR already exists
+          from the same head branch into the same base branch.
+        required: false
+        type: boolean
+        default: false
+
+    secrets:
+      gh_token:
+        description: 'GitHub token (PAT) with pull-request write permissions on the target repo'
+        required: true
+
+    outputs:
+      pr_number:
+        description: 'Number of the created (or existing) PR'
+        value: ${{ jobs.create-pr.outputs.pr_number }}
+      pr_url:
+        description: 'HTML URL of the created (or existing) PR'
+        value: ${{ jobs.create-pr.outputs.pr_url }}
+      skipped:
+        description: '"true" when PR creation was skipped due to a duplicate'
+        value: ${{ jobs.create-pr.outputs.skipped }}
+
+  # ── Manual trigger for testing this workflow directly ───────────────
+  workflow_dispatch:
+    inputs:
+      pr_title:
+        description: 'PR title'
+        required: true
+        default: '[CI] Automated PR'
+      target_repo:
+        description: 'Target repository (owner/repo)'
+        required: true
+      target_branch:
+        description: 'Target branch (base)'
+        required: true
+        default: 'main'
+      source_owner:
+        description: 'Source fork owner'
+        required: true
+      source_branch:
+        description: 'Source branch (head)'
+        required: true
+      pr_body:
+        description: 'PR body (Markdown)'
+        required: false
+        default: 'Automated PR created via workflow_dispatch.'
+      draft:
+        description: 'Open as draft? (true/false)'
+        required: false
+        default: 'false'
+      labels:
+        description: 'Comma-separated labels'
+        required: false
+        default: ''
+      assignees:
+        description: 'Comma-separated assignees'
+        required: false
+        default: ''
+      allow_duplicate:
+        description: 'Allow duplicate PRs? (true/false)'
+        required: false
+        default: 'false'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      GH_TOKEN: ${{ secrets.gh_token || secrets.GITHUB_TOKEN }}
+
+    outputs:
+      pr_number: ${{ steps.result.outputs.pr_number }}
+      pr_url:    ${{ steps.result.outputs.pr_url }}
+      skipped:   ${{ steps.result.outputs.skipped }}
+
+    steps:
+      # ── Resolve inputs (handles both workflow_call and workflow_dispatch) ──
+      - name: Resolve inputs
+        id: inputs
+        run: |
+          # workflow_call supplies typed booleans; workflow_dispatch supplies strings.
+          DRAFT="${{ inputs.draft }}"
+          ALLOW_DUP="${{ inputs.allow_duplicate }}"
+
+          echo "pr_title=${{ inputs.pr_title }}"          >> "$GITHUB_OUTPUT"
+          echo "target_repo=${{ inputs.target_repo }}"    >> "$GITHUB_OUTPUT"
+          echo "target_branch=${{ inputs.target_branch }}" >> "$GITHUB_OUTPUT"
+          echo "source_owner=${{ inputs.source_owner }}"  >> "$GITHUB_OUTPUT"
+          echo "source_branch=${{ inputs.source_branch }}" >> "$GITHUB_OUTPUT"
+          echo "labels=${{ inputs.labels }}"              >> "$GITHUB_OUTPUT"
+          echo "assignees=${{ inputs.assignees }}"        >> "$GITHUB_OUTPUT"
+
+          # Normalise boolean-ish strings → true/false
+          [[ "$DRAFT"      == "true" ]] && echo "draft=true"       >> "$GITHUB_OUTPUT" || echo "draft=false"       >> "$GITHUB_OUTPUT"
+          [[ "$ALLOW_DUP"  == "true" ]] && echo "allow_dup=true"   >> "$GITHUB_OUTPUT" || echo "allow_dup=false"   >> "$GITHUB_OUTPUT"
+
+          # Write PR body to a temp file to handle multi-line content safely
+          cat > /tmp/pr_body.md <<'PR_BODY_EOF'
+          ${{ inputs.pr_body }}
+          PR_BODY_EOF
+
+      # ── Duplicate-check ───────────────────────────────────────────────
+      - name: Check for existing open PR
+        id: dedup
+        if: steps.inputs.outputs.allow_dup == 'false'
+        run: |
+          HEAD_REF="${{ steps.inputs.outputs.source_owner }}:${{ steps.inputs.outputs.source_branch }}"
+
+          EXISTING=$(gh pr list \
+            --repo "${{ steps.inputs.outputs.target_repo }}" \
+            --base "${{ steps.inputs.outputs.target_branch }}" \
+            --state open \
+            --json number,url,headRefName \
+            --jq \
+            --arg head "${{ steps.inputs.outputs.source_branch }}" \
+            '[.[] | select(.headRefName == $head)] | .[0] // empty | "\(.number)|\(.url)"')
+
+          if [ -n "$EXISTING" ]; then
+            PR_NUMBER=$(echo "$EXISTING" | cut -d'|' -f1)
+            PR_URL=$(echo "$EXISTING" | cut -d'|' -f2)
+            echo "::warning::Duplicate PR #${PR_NUMBER} already exists: ${PR_URL}. Skipping."
+            echo "skip=true"       >> "$GITHUB_OUTPUT"
+            echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "pr_url=$PR_URL"  >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── Create the PR ─────────────────────────────────────────────────
+      - name: Create pull request
+        id: create
+        if: steps.dedup.outputs.skip != 'true'
+        run: |
+          HEAD_REF="${{ steps.inputs.outputs.source_owner }}:${{ steps.inputs.outputs.source_branch }}"
+
+          DRAFT_FLAG=""
+          [[ "${{ steps.inputs.outputs.draft }}" == "true" ]] && DRAFT_FLAG="--draft"
+
+          PR_URL=$(gh pr create \
+            --repo "${{ steps.inputs.outputs.target_repo }}" \
+            --head "$HEAD_REF" \
+            --base "${{ steps.inputs.outputs.target_branch }}" \
+            --title "${{ steps.inputs.outputs.pr_title }}" \
+            --body-file /tmp/pr_body.md \
+            $DRAFT_FLAG)
+
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "pr_url=$PR_URL"       >> "$GITHUB_OUTPUT"
+          echo "::notice::Created PR #${PR_NUMBER}: ${PR_URL}"
+
+      # ── Apply labels ──────────────────────────────────────────────────
+      - name: Apply labels
+        if: steps.create.outputs.pr_number && steps.inputs.outputs.labels != ''
+        run: |
+          # Convert comma-separated list to --add-label compatible format
+          IFS=',' read -ra LABEL_ARRAY <<< "${{ steps.inputs.outputs.labels }}"
+          LABEL_ARGS=""
+          for label in "${LABEL_ARRAY[@]}"; do
+            label="$(echo "$label" | xargs)"  # trim whitespace
+            [ -n "$label" ] && LABEL_ARGS="$LABEL_ARGS --add-label \"$label\""
+          done
+
+          if [ -n "$LABEL_ARGS" ]; then
+            eval gh pr edit "${{ steps.create.outputs.pr_number }}" \
+              --repo "${{ steps.inputs.outputs.target_repo }}" \
+              $LABEL_ARGS
+            echo "::notice::Labels applied: ${{ steps.inputs.outputs.labels }}"
+          fi
+
+      # ── Add assignees ─────────────────────────────────────────────────
+      - name: Add assignees
+        if: steps.create.outputs.pr_number && steps.inputs.outputs.assignees != ''
+        run: |
+          IFS=',' read -ra ASSIGNEE_ARRAY <<< "${{ steps.inputs.outputs.assignees }}"
+          ASSIGNEE_ARGS=""
+          for assignee in "${ASSIGNEE_ARRAY[@]}"; do
+            assignee="$(echo "$assignee" | xargs)"
+            [ -n "$assignee" ] && ASSIGNEE_ARGS="$ASSIGNEE_ARGS --add-assignee \"$assignee\""
+          done
+
+          if [ -n "$ASSIGNEE_ARGS" ]; then
+            eval gh pr edit "${{ steps.create.outputs.pr_number }}" \
+              --repo "${{ steps.inputs.outputs.target_repo }}" \
+              $ASSIGNEE_ARGS
+            echo "::notice::Assignees added: ${{ steps.inputs.outputs.assignees }}"
+          fi
+
+      # ── Aggregate outputs ─────────────────────────────────────────────
+      - name: Set final outputs
+        id: result
+        run: |
+          if [ "${{ steps.dedup.outputs.skip }}" == "true" ]; then
+            # Skipped due to duplicate
+            echo "skipped=true"                                    >> "$GITHUB_OUTPUT"
+            echo "pr_number=${{ steps.dedup.outputs.pr_number }}" >> "$GITHUB_OUTPUT"
+            echo "pr_url=${{ steps.dedup.outputs.pr_url }}"       >> "$GITHUB_OUTPUT"
+          else
+            echo "skipped=false"                                   >> "$GITHUB_OUTPUT"
+            echo "pr_number=${{ steps.create.outputs.pr_number }}" >> "$GITHUB_OUTPUT"
+            echo "pr_url=${{ steps.create.outputs.pr_url }}"      >> "$GITHUB_OUTPUT"
+          fi
