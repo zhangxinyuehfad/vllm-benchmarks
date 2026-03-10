@@ -41,7 +41,7 @@ jobs:
       - name: Create pull request
         if: github.event_name != 'pull_request'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export BRANCH="auto/update-estimated-times-${{ github.run_id }}"
           git config user.name "github-actions[bot]"
