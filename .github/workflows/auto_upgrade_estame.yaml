@@ -50,12 +50,12 @@ jobs:
           git commit -m "[CI] Auto-update estimated test times in config.yaml Computed from timing-data artifacts of workflow run. \
           Buffer ratio: 1.1x median, rounded to the nearest 10 s."
           git checkout -b ${{ env.BRANCH_NAME }}
-          git remote add ${{ env.FORK_OWNER }} https://github.com/${{ env.FORK_OWNER }}/vllm-benchmarks.git
+          git remote add ${{ env.FORK_OWNER }} https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ env.FORK_OWNER }}/vllm-benchmarks.git
           git push -f ${{ env.FORK_OWNER }} ${{ env.BRANCH_NAME }}:${{ env.BRANCH_NAME }}
           gh pr create \
-            --repo "${{ env.UPSTREAM_REPO }}" \
+            --repo ${{ env.UPSTREAM_REPO }} \
             --base main \
-            --head "${{ env.FORK_OWNER }}":${{ env.BRANCH_NAME }} \
+            --head ${{ env.FORK_OWNER }}:${{ env.BRANCH_NAME }} \
             --title "chore: Auto-update estimated test times in config.yaml" \
             --body "## Summary
 
