@@ -25,8 +25,13 @@ jobs:
     name: Update estimated_time in config.yaml
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout fork repo
         uses: actions/checkout@v6
+        with:
+          repository: Potabk/vllm-benchmarks
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+          ref: test
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,22 +40,20 @@ jobs:
 
       - name: Update config.yaml from timing data
         run: |
-          echo "Collecting timing data artifacts..." > timing_data.txt
+          echo "Collecting timing data artifacts...222" > timing_data.txt
           git status
 
       - name: Create pull request
         if: github.event_name != 'pull_request'
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           BRANCH_NAME: auto/update-estimated-times-${{ github.run_id }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "[CI] Auto-update estimated test times in config.yaml Computed from timing-data artifacts of workflow run. \
-          Buffer ratio: 1.1x median, rounded to the nearest 10 s."
+          git commit -sm "[CI] Auto-update estimated test times in config.yaml Computed from timing-data artifacts of workflow run"
           git checkout -b ${{ env.BRANCH_NAME }}
-          git remote add ${{ env.FORK_OWNER }} https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ env.FORK_OWNER }}/vllm-benchmarks.git
           git remote -v
           git log
           git push -f ${{ env.FORK_OWNER }} ${{ env.BRANCH_NAME }}:${{ env.BRANCH_NAME }}
