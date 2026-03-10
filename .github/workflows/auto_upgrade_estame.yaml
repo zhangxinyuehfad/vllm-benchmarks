@@ -55,7 +55,7 @@ jobs:
           git commit -sm "[CI] Auto-update estimated test times in config.yaml Computed from timing-data artifacts of workflow run"
           git checkout -b ${{ env.BRANCH_NAME }}
           git remote -v
-          git push -f ${{ env.FORK_OWNER }} ${{ env.BRANCH_NAME }}:${{ env.BRANCH_NAME }}
+          git push -f origin ${{ env.BRANCH_NAME }}:${{ env.BRANCH_NAME }}
           gh pr create \
             --repo ${{ env.UPSTREAM_REPO }} \
             --base main \
