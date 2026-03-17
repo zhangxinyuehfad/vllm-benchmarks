@@ -121,7 +121,7 @@ ENV_RULES = [
     },
     {
         "pattern": r"tests/e2e/singlecard/",
-        "runner": "linux-aarch64-a2-1",
+        "runner": "linux-aarch64-a2-2",
         "image": "swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.5.1-910b-ubuntu22.04-py3.11",
         "test_type": "e2e",
         "container_env": {**_E2E_CONTAINER_ENV},
