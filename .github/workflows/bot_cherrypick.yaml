@@ -100,6 +100,7 @@ jobs:
             core.setOutput('merge_commit_sha', pr.merge_commit_sha);
             core.setOutput('pr_number', String(context.issue.number));
             core.setOutput('pr_title', pr.title);
+            core.setOutput('pr_body', pr.body || '');
             core.setOutput('commenter', commenter);
             core.info(`Cherry-pick PR #${context.issue.number} (${pr.merge_commit_sha}) → ${targetBranch}`);
 
@@ -135,7 +136,7 @@ jobs:
           git checkout -b "${NEW_BRANCH}" "upstream/${TARGET_BRANCH}"
 
           # Cherry-pick the merge commit; -m 1 selects the mainline (first) parent
-          if ! git cherry-pick -x -m 1 "${MERGE_SHA}" 2>&1; then
+          if ! git cherry-pick -x -s -m 1 "${MERGE_SHA}" 2>&1; then
             CONFLICT_FILES=$(git diff --name-only --diff-filter=U | tr '\n' ' ')
             git cherry-pick --abort || true
             echo "CHERRYPICK_ERROR=Cherry-pick failed due to conflicts in: ${CONFLICT_FILES}" >> $GITHUB_ENV
@@ -155,11 +156,12 @@ jobs:
           TARGET_BRANCH: ${{ steps.parse.outputs.target_branch }}
           PR_NUMBER: ${{ steps.parse.outputs.pr_number }}
           PR_TITLE: ${{ steps.parse.outputs.pr_title }}
+          PR_BODY: ${{ steps.parse.outputs.pr_body }}
           COMMENTER: ${{ steps.parse.outputs.commenter }}
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
-            const { NEW_BRANCH, TARGET_BRANCH, PR_NUMBER, PR_TITLE, COMMENTER } = process.env;
+            const { NEW_BRANCH, TARGET_BRANCH, PR_NUMBER, PR_TITLE, PR_BODY, COMMENTER } = process.env;
             const forkOwner = process.env.FORK_OWNER;
             try {
               const { data: newPr } = await github.rest.pulls.create({
@@ -172,6 +174,10 @@ jobs:
                   `Cherry-pick of #${PR_NUMBER} onto \`${TARGET_BRANCH}\`.`,
                   '',
                   `Requested by @${COMMENTER}.`,
+                  '',
+                  '---',
+                  '',
+                  PR_BODY,
                 ].join('\n'),
               });
               core.setOutput('new_pr_url', newPr.html_url);
