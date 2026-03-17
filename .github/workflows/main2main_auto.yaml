@@ -490,15 +490,14 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
           prompt: |
-            Use the main2main-error-analysis skill to diagnose and fix CI failures.
+            Use the main2main skill to diagnose and fix CI failures.
 
             The E2E-Full CI has failed. Details:
             - Run ID: ${{ steps.ctx.outputs.run_id }}
             - Good commit (pinned): ${{ steps.ctx.outputs.old_commit }}
             - Bad commit (upstream): ${{ steps.ctx.outputs.new_commit }}
 
-            The skill will handle log extraction and error analysis via extract_and_analyze.py.
-            Follow all 4 phases of the skill (extract, trace, report, fix).
+            The skill will handle log extraction and error analysis via ci_log_summary.py.
             Commit all fixes with '-s' but do NOT create a PR or branch — the orchestrator handles that.
           claude_args: "--max-budget-usd 20.0 --dangerously-skip-permissions --allowed-tools 'Bash(git *),Bash(gh *),Bash(grep *),Bash(sed *),Bash(python3 *),Read,Write,Edit,Glob,Grep'"
           show_full_output: true
@@ -621,7 +620,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
           prompt: |
-            Use the main2main-error-analysis skill to apply targeted fixes based on bisect results.
+            Use the main2main skill to apply targeted fixes based on bisect results.
 
             The E2E-Full CI has failed after Phase 2 fix. Now using bisect to identify culprit commits.
 
